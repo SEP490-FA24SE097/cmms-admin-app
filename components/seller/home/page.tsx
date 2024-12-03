@@ -102,7 +102,11 @@ export default function SellerHome() {
     "Khách hàng 3",
     "Khách hàng 4",
   ];
-
+  interface Invoice {
+    id: string; // Unique identifier for the invoice
+    name: string; // Name of the invoice
+    materials: Material[]; // List of selected materials for this invoice
+  }
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -128,11 +132,24 @@ export default function SellerHome() {
   } = useInvoiceContext();
 
   const activeInvoice = invoices[activeInvoiceIndex];
-  const result = activeInvoice.materials.map(material => ({
+  const calculateTotals = (invoice: Invoice) => {
+    const totals = invoice.materials.reduce(
+      (acc, material) => {
+        acc.totalQuantity += material.quantity;
+        acc.totalPrice += material.price * material.quantity;
+        return acc;
+      },
+      { totalQuantity: 0, totalPrice: 0 } // Initial values
+    );
+
+    return totals;
+  };
+  const totals = calculateTotals(activeInvoice);
+  const result = activeInvoice.materials.map((material) => ({
     materialId: material.materialId,
-    variantId: material.variantId
+    variantId: material.variantId,
   }));
- console.log(result);
+  //  console.log(result);
   return (
     <div className="grid h-full grid-cols-10 grid-rows-1">
       <div className="col-span-6 mr-1">
@@ -248,9 +265,14 @@ export default function SellerHome() {
               <div className="col-span-2 h-full col-start-4">
                 <div className="flex justify-end h-full items-center gap-10 mx-5">
                   <div>
-                    Tổng tiền hàng: <span>2</span>
+                    Tổng tiền hàng: <span>{totals.totalQuantity}</span>
                   </div>
-                  <div className="font-bold">100000d</div>
+                  <div className="font-bold">
+                    {totals.totalPrice.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "vnd",
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
