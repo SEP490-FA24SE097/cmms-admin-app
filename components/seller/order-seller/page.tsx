@@ -704,7 +704,7 @@ export default function OrderSellerPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {shipper.map((item) => (
-                      <SelectItem value={item}>{item}</SelectItem>
+                      <SelectItem key={item} value={item}>{item}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

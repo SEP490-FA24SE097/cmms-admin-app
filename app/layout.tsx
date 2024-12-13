@@ -1,4 +1,4 @@
-import localFont, { Roboto } from "next/font/google";
+import { Roboto } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";

@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
 import {useSearchParams } from "next/navigation";
@@ -60,8 +59,8 @@ export default function LoginPage() {
       });
 
       if (!res?.error) {
-        const session = await getSession(); // Lấy session hiện tại
-        const token = session?.user?.accessToken;
+        // const session = await getSession(); // Lấy session hiện tại
+        // const token = session?.user?.accessToken;
         // let userRole = "";
         // if (token) {
         //   try {

@@ -1,5 +1,5 @@
 import { Session } from "next-auth";
-import { api, axiosAuth } from "./api";
+import { axiosAuth } from "./api";
 
 const refreshToken = async (session: Session | null) => {
   try {

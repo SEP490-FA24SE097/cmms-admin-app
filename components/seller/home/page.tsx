@@ -1,5 +1,5 @@
 "use client";
-import HeaderSeler from "@/components/seller/header/page";
+
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { CiFilter } from "react-icons/ci";
@@ -24,7 +24,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
