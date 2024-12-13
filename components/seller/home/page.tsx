@@ -20,6 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
   PaginationContent,
@@ -30,96 +31,71 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useInvoiceContext } from "@/context/invoice-context";
+import { Material } from "@/lib/actions/material-store/type/material-store";
+import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
+import { useSession } from "next-auth/react";
+import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
 
 export default function SellerHome() {
+  const { data: session } = useSession();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
-  const [filteredData, setFilteredData] = useState<string[]>([]); // Mảng chuỗi
-  const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
-  interface Material {
-    id: string;
-    materialId: string;
-    materialCode: string | null;
-    materialName: string;
-    materialImage: string;
-    variantId: string | null;
-    variantName: string | null;
-    price: number;
-    variantImage: string | null;
-    quantity: number;
-    lastUpdateTime: string;
-  }
+  const [filteredData, setFilteredData] = useState<typeof data>([]); // Mảng chuỗi
+  const [showDropdown, setShowDropdown] = useState(false); // Boolean
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const storeId = session?.user.user.storeId;
 
-  // Gán kiểu cho materials
-  const materials: Material[] = [
-    {
-      id: "aad387e7-df7e-4bca-b163-591f6b6abd06",
-      materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-      materialCode: null,
-      materialName: "vật liệu 2",
-      materialImage:
-        "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-      variantId: "14eae9b8-18ca-444f-8561-855bc25b4b53",
-      variantName: "vật liệu 2-biến thể 1",
-      price: 100000,
-      variantImage:
-        "https://www.sondulux.net.vn/image/cache/catalog/san-pham/son-dulux-weathershield-colour-protect-01-800x800.jpg",
-      quantity: 15,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-    {
-      id: "b37586fc-60a5-4dab-89c4-6be63a31f02c",
-      materialId: "e356c732-8493-4ce1-beb4-44a78ab58a46",
-      materialCode: null,
-      materialName: "vật liệu 3",
-      materialImage:
-        "https://vlxdcantho.com/wp-content/uploads/2022/06/xi-mang-viet-nhat.jpg",
-      variantId: null,
-      variantName: null,
-      variantImage: null,
-      price: 200000,
-      quantity: 10,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-    {
-      id: "22cc3bdf-2800-4bee-88d3-a6efae05a275",
-      materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-      materialCode: null,
-      materialName: "vật liệu 2",
-      materialImage:
-        "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-      variantId: "f4b4cb78-5129-41ac-bacd-114a4280f9f0",
-      variantName: "vật liệu 2-biến thể 2",
-      price: 300000,
-      variantImage:
-        "https://thegioicongnghiep.com/image/vn/2022_01/son-nuoc-dulux-19yr-14629mau-do-5-lit-19yr-14629mau-do-dulux-1641288195.png",
-      quantity: 15,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-  ];
-  const data: string[] = [
-    "Khách hàng 1",
-    "Khách hàng 2",
-    "Khách hàng 3",
-    "Khách hàng 4",
-  ];
+  const [searchParams, setSearchParams] = useState<
+    Record<string, string | number | boolean>
+  >({
+    page: currentPage,
+    itemPerPage: 15,
+    storeId: storeId || "",
+  });
+
+  // Fetch material store list
+  const { data: materialData, isLoading: isLoadingMaterialData } =
+    useGetMaterialStore(searchParams);
+
+  // Handle updating current page dynamically
+  useEffect(() => {
+    setSearchParams((prev) => ({
+      ...prev,
+      page: currentPage,
+    }));
+  }, [currentPage]);
+
   interface Invoice {
     id: string; // Unique identifier for the invoice
     name: string; // Name of the invoice
     materials: Material[]; // List of selected materials for this invoice
   }
+  const data = [
+    { id: "KH000001", name: "Nguyễn Tấn Đạt" },
+    { id: "KH000002", name: "Nguyễn Anh Đức" },
+    { id: "KH000003", name: "Phan Văn Cường" },
+    { id: "KH000004", name: "Phạm Phú Hưng" },
+  ];
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
 
     if (value.trim()) {
       const filtered = data.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
+        item.name.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredData(filtered);
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
+  };
+
+  const handleSelectItem = (item: { id: string; name: string }) => {
+    setSearchTerm(item.name); // Set the input to the selected name
+    setSelectedId(item.id); // Save the selected ID
+    setShowDropdown(false); // Hide the dropdown
   };
 
   const {
@@ -129,14 +105,15 @@ export default function SellerHome() {
     updateQuantity,
     handleQuantityChange,
     handleRemoveMaterial,
+    handleRemoveInvoice,
   } = useInvoiceContext();
 
   const activeInvoice = invoices[activeInvoiceIndex];
   const calculateTotals = (invoice: Invoice) => {
-    const totals = invoice.materials.reduce(
+    const totals = invoice?.materials.reduce(
       (acc, material) => {
         acc.totalQuantity += material.quantity;
-        acc.totalPrice += material.price * material.quantity;
+        acc.totalPrice += material.materialPrice * material.quantity;
         return acc;
       },
       { totalQuantity: 0, totalPrice: 0 } // Initial values
@@ -144,12 +121,68 @@ export default function SellerHome() {
 
     return totals;
   };
+  const discount = 0;
   const totals = calculateTotals(activeInvoice);
-  const result = activeInvoice.materials.map((material) => ({
-    materialId: material.materialId,
-    variantId: material.variantId,
-  }));
-  //  console.log(result);
+  const storeItem = activeInvoice?.materials.map((item, index) => ({
+    materialId: item.materialId,  // Assuming each item in materials represents a materialId
+    quantity: item.quantity,
+    variantId: item.variantId,    // Replace '1' with the desired logic to calculate quantity
+}));
+
+
+  const handlePaymentClick = async () => {
+
+    const result = {
+      totalAmount: totals.totalPrice,
+      salePrice: totals.totalPrice - discount,
+      customerPaid: 0,
+      invoiceType: 0,
+      customerId: selectedId,
+      storeItems: storeItem,
+    };
+  
+    // If validation passes, proceed with the API call
+    try {
+      const response = await createQuickPayment(result);
+
+      // Check if the response indicates success
+      if (response.data?.success) {
+        toast({
+          title: "Thanh toán đã được thực hiện thành công.",
+          description: "Cảm ơn bạn vì đã chọn mua hàng ở chúng tôi!",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        handleRemoveInvoice(activeInvoiceIndex);
+
+        // // Redirect to the home page after a short delay
+        // setTimeout(() => {
+        //   window.location.href = "/home";
+        // }, 2000);
+      } else {
+        // Handle cases where the response indicates failure
+        toast({
+          title: "Lỗi",
+          description: "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+
+        console.error("Unexpected Payment Response:", response);
+      }
+    } catch (error) {
+      // Handle network or unexpected errors
+      toast({
+        title: "Lỗi",
+        description: "Thanh toán thất bại. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+
+      console.error("Payment failed with exception:", error);
+    }
+  };
   return (
     <div className="grid h-full grid-cols-10 grid-rows-1">
       <div className="col-span-6 mr-1">
@@ -240,16 +273,19 @@ export default function SellerHome() {
                   <div className="col-span-3 col-start-3">
                     <div className="flex gap-10 justify-center items-center">
                       <div className="w-32 border-b text-end">
-                        {item.price.toLocaleString("vi-VN", {
+                        {item.materialPrice.toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}
                       </div>
                       <div className="font-bold">
-                        {(item.price * item.quantity).toLocaleString("vi-VN", {
-                          style: "currency",
-                          currency: "vnd",
-                        })}
+                        {(item.materialPrice * item.quantity).toLocaleString(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "vnd",
+                          }
+                        )}
                       </div>
                     </div>
                   </div>
@@ -265,10 +301,10 @@ export default function SellerHome() {
               <div className="col-span-2 h-full col-start-4">
                 <div className="flex justify-end h-full items-center gap-10 mx-5">
                   <div>
-                    Tổng tiền hàng: <span>{totals.totalQuantity}</span>
+                    Tổng tiền hàng: <span>{totals?.totalQuantity}</span>
                   </div>
                   <div className="font-bold">
-                    {totals.totalPrice.toLocaleString("vi-VN", {
+                    {totals?.totalPrice.toLocaleString("vi-VN", {
                       style: "currency",
                       currency: "vnd",
                     })}
@@ -294,9 +330,9 @@ export default function SellerHome() {
                   >
                     <path
                       stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
                       d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                     />
                   </svg>
@@ -314,13 +350,13 @@ export default function SellerHome() {
                 {showDropdown && (
                   <ul className="absolute left-0 z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredData.length > 0 ? (
-                      filteredData.map((item, index) => (
+                      filteredData.map((item) => (
                         <li
-                          key={index}
+                          key={item.id}
                           className="p-2 hover:bg-blue-100 cursor-pointer"
-                          onMouseDown={() => setSearchTerm(item)}
+                          onMouseDown={() => handleSelectItem(item)}
                         >
-                          {item}
+                          {item.name}
                         </li>
                       ))
                     ) : (
@@ -328,6 +364,7 @@ export default function SellerHome() {
                     )}
                   </ul>
                 )}
+                
               </div>
               <div>
                 <HoverCard openDelay={100} closeDelay={200}>
@@ -371,7 +408,7 @@ export default function SellerHome() {
           </div>
           <div className="row-span-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
-              {materials?.map((product, index) => (
+              {materialData?.data?.map((product, index) => (
                 <div
                   className="flex items-center px-2 py-1 rounded-md border border-transparent hover:border-blue-600 hover:border"
                   key={index}
@@ -389,7 +426,7 @@ export default function SellerHome() {
                       {product.variantName || product.materialName}
                     </div>
                     <div className="text-blue-600 font-bold">
-                      {product.price.toLocaleString("vi-VN", {
+                      {product.materialPrice.toLocaleString("vi-VN", {
                         style: "currency",
                         currency: "vnd",
                       })}
@@ -417,7 +454,7 @@ export default function SellerHome() {
                 </Pagination>
               </div>
               <div>
-                <Button className=" bg-blue-600 px-20 py-7 text-2xl font-bold text-white hover:bg-blue-700">
+                <Button onClick={handlePaymentClick} className=" bg-blue-600 px-20 py-7 text-2xl font-bold text-white hover:bg-blue-700">
                   Thanh toán
                 </Button>
               </div>

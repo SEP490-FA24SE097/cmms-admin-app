@@ -38,6 +38,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Material } from "@/lib/actions/material-store/type/material-store";
 export default function OrderSellerPage() {
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
   const [filteredData, setFilteredData] = useState<string[]>([]); // Mảng chuỗi
@@ -70,19 +71,7 @@ export default function OrderSellerPage() {
     minute: "2-digit",
     hour12: false,
   });
-  interface Material {
-    id: string;
-    materialId: string;
-    materialCode: string | null;
-    materialName: string;
-    materialImage: string;
-    variantId: string | null;
-    variantName: string | null;
-    price: number;
-    variantImage: string | null;
-    quantity: number;
-    lastUpdateTime: string;
-  }
+ 
   interface Invoice {
     id: string; // Unique identifier for the invoice
     name: string; // Name of the invoice
@@ -106,7 +95,7 @@ export default function OrderSellerPage() {
     const totals = invoice.materials.reduce(
       (acc, material) => {
         acc.totalQuantity += material.quantity;
-        acc.totalPrice += material.price * material.quantity;
+        acc.totalPrice += material.materialPrice * material.quantity;
         return acc;
       },
       { totalQuantity: 0, totalPrice: 0 } // Initial values
@@ -330,13 +319,13 @@ export default function OrderSellerPage() {
                   <div className="col-span-3 col-start-3">
                     <div className="flex gap-10 justify-center items-center">
                       <div className="w-32 border-b text-end">
-                        {item.price.toLocaleString("vi-VN", {
+                        {item.materialPrice.toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}
                       </div>
                       <div className="font-bold">
-                        {(item.price * item.quantity).toLocaleString("vi-VN", {
+                        {(item.materialPrice * item.quantity).toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}

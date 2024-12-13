@@ -22,80 +22,88 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useInvoiceContext } from "@/context/invoice-context";
+import { signOut, useSession } from "next-auth/react";
+import { Material } from "@/lib/actions/material-store/type/material-store";
+import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
 
 export default function HeaderSeler() {
+  const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
   const [filteredData, setFilteredData] = useState<Material[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const { toast } = useToast();
-  interface Material {
-    id: string;
-    materialId: string;
-    materialCode: string | null;
-    materialName: string;
-    materialImage: string;
-    variantId: string | null;
-    variantName: string | null;
-    price: number;
-    variantImage: string | null;
-    quantity: number;
-    lastUpdateTime: string;
-  }
+  const storeId = session?.user.user.storeId;
+  const [searchParams, setSearchParams] = useState<
+    Record<string, string | number | boolean>
+  >({
+    materialName: searchTerm,
+    storeId: storeId || "",
+  });
 
+  // Fetch material store list
+  const { data: materials, isLoading: isLoadingMaterialData } =
+    useGetMaterialStore(searchParams);
+
+  useEffect(() => {
+    setSearchParams((prev) => ({
+      ...prev,
+      materialName: searchTerm,
+    }));
+  }, [searchTerm]);
   // Gán kiểu cho materials
-  const materials: Material[] = [
-    {
-      id: "aad387e7-df7e-4bca-b163-591f6b6abd06",
-      materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-      materialCode: null,
-      materialName: "vật liệu 2",
-      materialImage:
-        "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-      variantId: "14eae9b8-18ca-444f-8561-855bc25b4b53",
-      variantName: "vật liệu 2-biến thể 1",
-      price: 100000,
-      variantImage:
-        "https://www.sondulux.net.vn/image/cache/catalog/san-pham/son-dulux-weathershield-colour-protect-01-800x800.jpg",
-      quantity: 15,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-    {
-      id: "b37586fc-60a5-4dab-89c4-6be63a31f02c",
-      materialId: "e356c732-8493-4ce1-beb4-44a78ab58a46",
-      materialCode: null,
-      materialName: "vật liệu 3",
-      materialImage:
-        "https://vlxdcantho.com/wp-content/uploads/2022/06/xi-mang-viet-nhat.jpg",
-      variantId: null,
-      variantName: null,
-      variantImage: null,
-      price: 200000,
-      quantity: 10,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-    {
-      id: "22cc3bdf-2800-4bee-88d3-a6efae05a275",
-      materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-      materialCode: null,
-      materialName: "vật liệu 2",
-      materialImage:
-        "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-      variantId: "f4b4cb78-5129-41ac-bacd-114a4280f9f0",
-      variantName: "vật liệu 2-biến thể 2",
-      price: 300000,
-      variantImage:
-        "https://thegioicongnghiep.com/image/vn/2022_01/son-nuoc-dulux-19yr-14629mau-do-5-lit-19yr-14629mau-do-dulux-1641288195.png",
-      quantity: 15,
-      lastUpdateTime: "0001-01-01T00:00:00",
-    },
-  ];
+  // const materials: Material[] = [
+  //   {
+  //     id: "aad387e7-df7e-4bca-b163-591f6b6abd06",
+  //     materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
+  //     materialCode: null,
+  //     materialName: "vật liệu 2",
+  //     materialImage:
+  //       "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
+  //     variantId: "14eae9b8-18ca-444f-8561-855bc25b4b53",
+  //     variantName: "vật liệu 2-biến thể 1",
+  //     price: 100000,
+  //     variantImage:
+  //       "https://www.sondulux.net.vn/image/cache/catalog/san-pham/son-dulux-weathershield-colour-protect-01-800x800.jpg",
+  //     quantity: 15,
+  //     lastUpdateTime: "0001-01-01T00:00:00",
+  //   },
+  //   {
+  //     id: "b37586fc-60a5-4dab-89c4-6be63a31f02c",
+  //     materialId: "e356c732-8493-4ce1-beb4-44a78ab58a46",
+  //     materialCode: null,
+  //     materialName: "vật liệu 3",
+  //     materialImage:
+  //       "https://vlxdcantho.com/wp-content/uploads/2022/06/xi-mang-viet-nhat.jpg",
+  //     variantId: null,
+  //     variantName: null,
+  //     variantImage: null,
+  //     price: 200000,
+  //     quantity: 10,
+  //     lastUpdateTime: "0001-01-01T00:00:00",
+  //   },
+  //   {
+  //     id: "22cc3bdf-2800-4bee-88d3-a6efae05a275",
+  //     materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
+  //     materialCode: null,
+  //     materialName: "vật liệu 2",
+  //     materialImage:
+  //       "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
+  //     variantId: "f4b4cb78-5129-41ac-bacd-114a4280f9f0",
+  //     variantName: "vật liệu 2-biến thể 2",
+  //     price: 300000,
+  //     variantImage:
+  //       "https://thegioicongnghiep.com/image/vn/2022_01/son-nuoc-dulux-19yr-14629mau-do-5-lit-19yr-14629mau-do-dulux-1641288195.png",
+  //     quantity: 15,
+  //     lastUpdateTime: "0001-01-01T00:00:00",
+  //   },
+  // ];
   const {
     invoices,
     activeInvoiceIndex,
     setActiveInvoiceIndex,
     handleAddInvoice,
     handleSelectMaterial,
-    handleRemoveInvoice,  
+    handleRemoveInvoice,
   } = useInvoiceContext();
 
   const invoiceListRef = useRef<HTMLDivElement>(null);
@@ -117,15 +125,13 @@ export default function HeaderSeler() {
     const value = e.target.value;
     setSearchTerm(value);
 
-    if (value.trim()) {
-      const filtered = materials.filter((item) =>
-        item.materialName.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredData(filtered);
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
+    // Filter data and handle undefined case
+    const filtered = (materials?.data || []).filter((item) =>
+      item.materialName.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setFilteredData(filtered);
+    setShowDropdown(value.trim() !== "");
   };
   return (
     <nav className="grid grid-cols-3 grid-rows-1 gap-4 p-2 bg-blue-600 justify-between">
@@ -185,7 +191,7 @@ export default function HeaderSeler() {
                         </div>
                       </div>
                       <div className="text-blue-600 font-semibold">
-                        {item.price.toLocaleString("vi-VN", {
+                        {item.materialPrice.toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}
@@ -289,7 +295,7 @@ export default function HeaderSeler() {
           </HoverCardContent>
         </HoverCard>
         <div className="ml-5 flex gap-2 items-center">
-          <h1 className="text-white">0123457678</h1>
+          <h1 className="text-white">{session?.user.user.phoneNumber}</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="hover:bg-blue-900">
@@ -300,7 +306,9 @@ export default function HeaderSeler() {
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Billing</DropdownMenuItem>
               <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Subscription</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => signOut()}>
+                Đăng xuất
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

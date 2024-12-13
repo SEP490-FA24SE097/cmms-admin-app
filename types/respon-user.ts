@@ -11,4 +11,5 @@ export type user = {
   status: number;
   taxCode: string;
   ward: string;
+  storeId: string;
 };

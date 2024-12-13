@@ -8,12 +8,17 @@ interface Material {
   materialImage: string;
   variantId: string | null;
   variantName: string | null;
-  price: number;
   variantImage: string | null;
   quantity: number;
+  materialPrice: number;
+  variantPrice: number;
+  attributes: IAttributes[];
   lastUpdateTime: string;
 }
-
+interface IAttributes{
+  name: string;
+  value: string;
+}
 interface Invoice {
   id: string; // Unique identifier for the invoice
   name: string; // Name of the invoice

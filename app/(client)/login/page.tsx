@@ -4,14 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
-import { useRouter, useSearchParams } from "next/navigation";
+import {useSearchParams } from "next/navigation";
+import { useRouter } from 'nextjs-toploader/app';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
-
+import { getSession } from "next-auth/react";
 import {
   Form,
   FormControl,
@@ -22,18 +23,22 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+// import { jwtDecode } from "jwt-decode";
+
 
 export default function LoginPage() {
   const router = useRouter();
+
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
   const [loading, setLoading] = useState(false);
   const LoginSchema = z.object({
     userName: z
       .string()
-      .min(6, "Username must be more than 6 characters")
-      .max(28, "Username must be less than 29 characters"),
-    password: z.string().min(6, "Password is required"),
+      .min(1, "Tên đăng nhập phải nhiều hơn 1 ký tự")
+      .max(28, "Tên đăng nhập không được nhiều hơn 28 ký tự"),
+    password: z.string().min(1, "Mật khẩu không được để trống"),
   });
 
   const form = useForm({
@@ -55,10 +60,30 @@ export default function LoginPage() {
       });
 
       if (!res?.error) {
-        router.push("/");
+        const session = await getSession(); // Lấy session hiện tại
+        const token = session?.user?.accessToken;
+        // let userRole = "";
+        // if (token) {
+        //   try {
+        //     const decodedToken = jwtDecode<any>(token);
+        //     userRole =
+        //       decodedToken[
+        //         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        //       ] || "No role found";
+        //   } catch (error) {
+        //     console.error("Error decoding token:", error);
+        //   }
+        // }
+        // if (userRole === "Shipper_Store") {
+        //   handleNavigation("/order-tracking");
+        // } else {
+        //   handleNavigation("/");
+        // }
+        router.push("/home");
         toast({
           title: "Đăng nhập thành công",
           description: "Bạn đã đăng nhập thành công!",
+          style: { backgroundColor: "#73EC8B", color: "#ffffff" },
         });
         form.reset();
       } else {
@@ -77,9 +102,22 @@ export default function LoginPage() {
       setLoading(false); // Set loading to false when the submission completes
     }
   };
+
   const { toast } = useToast();
+//   const handleNavigation = (path: string) => {
+//     setIsLoadingPage(true);
+//     router.push(path);
+//   };
   return (
     <main className="bg-[#26313c] h-screen flex items-center justify-center p-10">
+      {isLoadingPage && (
+        <div className="fixed top-0 left-0 w-full h-1 bg-blue-500">
+          <div
+            className="h-full bg-blue-700 transition-all duration-300"
+            style={{ width: "100%" }}
+          ></div>
+        </div>
+      )}
       <div className="grid w-full h-full grid-cols-1 bg-white md:grid-cols-2 box-animate">
         <div className="bg-[#16202a] text-white flex items-center justify-center flex-col">
           <Avatar>
@@ -108,13 +146,13 @@ export default function LoginPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="block text-base font-bold text-gray-200 mb-1">
-                      userName
+                      Tên đăng nhập
                     </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         className="block w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition duration-150 ease-in-out"
-                        placeholder="Nhập userName"
+                        placeholder="Nhập tên đăng nhập"
                       />
                     </FormControl>
                     <FormMessage className="text-red-500 text-sm mt-1" />
@@ -127,7 +165,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem className="relative">
-                    <FormLabel className="block text-base font-bold text-gray-200 mb-1">
+                    <FormLabel className="block mt-2 text-base font-bold text-gray-200 mb-1">
                       Mật khẩu
                     </FormLabel>
                     <FormControl>
@@ -143,7 +181,7 @@ export default function LoginPage() {
                 )}
               />
 
-              <a className="text-sm flex justify-end font-medium text-primary-600 hover:underline dark:text-primary-500">
+              <a className="text-sm mt-1 flex justify-end font-medium text-primary-600 hover:underline dark:text-primary-500">
                 Quên mật khẩu?
               </a>
 
@@ -163,7 +201,7 @@ export default function LoginPage() {
                 </Button>
               )}
               <p className="mt-3 flex justify-center text-sm font-light text-gray-500 dark:text-gray-400">
-                Tôi chưa có tài khoản?{" "}
+                Tôi chưa có tài khoản?&nbsp;
                 <Link
                   href="/register"
                   className="font-medium text-blue-600 hover:underline dark:text-blue-500"
