@@ -6,7 +6,7 @@ import {
     FaArrowRightArrowLeft,
     FaBasketShopping,
     FaUserTie,
-    FaClipboardCheck 
+    FaClipboardCheck
 } from "react-icons/fa6";
 
 import { RiGridLine } from "react-icons/ri";
@@ -24,8 +24,8 @@ export default function NavHeader() {
         setDropdownOpen((prev) => ({ ...prev, [menu]: false }));
     };
     return (
-        <div className="flex bg-blue-500 justify-between w-[100%] items-center px-32 ">
-            <div className="relative flex items-center justify-between">
+        <div className="flex bg-blue-500 justify-between w-[100%] items-center">
+            <div className="relative flex items-center justify-between w-[80%] mx-auto">
                 <div className="flex items-center justify-center sm:items-stretch sm:justify-start">
                     <div className="hidden sm:block">
                         {/* <div className="flex space-x-4"> */}
@@ -51,7 +51,7 @@ export default function NavHeader() {
                                         onMouseLeave={() => handleMouseLeave('material')}
                                     >
                                         <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                                            <RiGridLine  className="mr-2 size-4" />
+                                            <RiGridLine className="mr-2 size-4" />
                                             Danh mục
                                         </div>
                                         <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
@@ -108,7 +108,7 @@ export default function NavHeader() {
                                         onMouseEnter={() => handleMouseEnter('customer')}
                                         onMouseLeave={() => handleMouseLeave('customer')}
                                     >
-                                         <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                                        <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                                             <FaBoxArchive className="mr-2 size-4" />
                                             Danh mục
                                         </div>
@@ -138,7 +138,7 @@ export default function NavHeader() {
                                         onMouseEnter={() => handleMouseEnter('supplier')}
                                         onMouseLeave={() => handleMouseLeave('supplier')}
                                     >
-                                         <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                                        <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                                             <FaBoxArchive className="mr-2 size-4" />
                                             Danh mục
                                         </div>
@@ -167,7 +167,7 @@ export default function NavHeader() {
                                         onMouseEnter={() => handleMouseEnter('services')}
                                         onMouseLeave={() => handleMouseLeave('services')}
                                     >
-                                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                                        <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                                             <FaBoxArchive className="mr-2 size-4" />
                                             Danh mục
                                         </div>
@@ -183,11 +183,11 @@ export default function NavHeader() {
                         </div>
                     </div>
                 </div>
-            </div>
-            <div>
-                <div className="text-white bg-blue-700  px-8 py-3 text-sm font-medium flex cursor-pointer justify-between items-center">
-                    <FaBasketShopping className="mr-2 size-4" />
-                    Bán hàng
+                <div>
+                    <div className="text-white bg-blue-700  px-8 py-3 text-sm font-medium flex cursor-pointer justify-between items-center">
+                        <FaBasketShopping className="mr-2 size-4" />
+                        Bán hàng
+                    </div>
                 </div>
             </div>
         </div>
