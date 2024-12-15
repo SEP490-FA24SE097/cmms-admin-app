@@ -33,15 +33,16 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { Material } from "@/lib/actions/material-store/type/material-store";
+import CreateCustomer from "../add-customer/page";
+import { useGetCustomer } from "@/lib/actions/customer/react-query/customer-query";
+import { ICustomer } from "@/lib/actions/customer/type/customer";
 export default function OrderSellerPage() {
+  const [keyword, setKeyword] = useState<string>(""); // Chuỗi nhập vào
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
-  const [filteredData, setFilteredData] = useState<string[]>([]); // Mảng chuỗi
+  const [filteredData, setFilteredData] = useState<ICustomer[]>([]); // Mảng chuỗi
+  const [selectedName, setSelectedName] = useState<string>(""); // Chuỗi nhập vào
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const [discount, setDiscount] = useState(0);
   const [customerPaid, setCustomerPaid] = useState(0);
@@ -71,7 +72,7 @@ export default function OrderSellerPage() {
     minute: "2-digit",
     hour12: false,
   });
- 
+
   interface Invoice {
     id: string; // Unique identifier for the invoice
     name: string; // Name of the invoice
@@ -187,29 +188,48 @@ export default function OrderSellerPage() {
     setSelectedDistrict("");
     setSelectedWard("");
   }, [selectedProvince]);
-  const data: string[] = [
-    "Khách hàng 1",
-    "Khách hàng 2",
-    "Khách hàng 3",
-    "Khách hàng 4",
-  ];
 
-  const shipper: string[] = ["Cường", "Hưng", "Đạt", "Mẫn"];
+  const [searchCusParams, setSearchCusParams] = useState<
+    Record<string, string | number | boolean>
+  >({
+    Email: keyword,
+  });
+  const { data: customers, isLoading: isLoadingCustomer } =
+    useGetCustomer(searchCusParams);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
 
-    if (value.trim()) {
-      const filtered = data.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
+    if (keyword === "") {
+      const filtered = (customers?.data || []).filter((item) =>
+        item.email.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredData(filtered);
+      setFilteredData(filtered); // `filtered` will always be an array
       setShowDropdown(true);
     } else {
+      setFilteredData([]); // Clear filteredData when dropdown is hidden
       setShowDropdown(false);
     }
   };
+  const handleDeleteCus = () => {
+    setSelectedName(""); // Set the input to the selected name
+    setSelectedId(null); // Save the selected ID
+  };
+  const handleSelectItem = (item: ICustomer) => {
+    setSearchTerm(item.fullName);
+    setSelectedName(item.fullName); // Set the input to the selected name
+    setSelectedId(item.id); // Save the selected ID
+    setShowDropdown(false); // Hide the dropdown
+  };
+  useEffect(() => {
+    setSearchCusParams((prev) => ({
+      ...prev,
+      Email: keyword,
+    }));
+  }, [keyword]);
+  const shipper: string[] = ["Cường", "Hưng", "Đạt", "Mẫn"];
+
   // Fetch wards based on selected district
   useEffect(() => {
     if (selectedDistrict) {
@@ -325,10 +345,13 @@ export default function OrderSellerPage() {
                         })}
                       </div>
                       <div className="font-bold">
-                        {(item.materialPrice * item.quantity).toLocaleString("vi-VN", {
-                          style: "currency",
-                          currency: "vnd",
-                        })}
+                        {(item.materialPrice * item.quantity).toLocaleString(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "vnd",
+                          }
+                        )}
                       </div>
                     </div>
                   </div>
@@ -385,7 +408,30 @@ export default function OrderSellerPage() {
             <div className="bg-white flex flex-col justify-between h-full w-full rounded-lg shadow-lg">
               <div className="p-2">
                 <div className="flex justify-between mb-3">
-                  <h1 className="font-bold ml-5">CMMS</h1>
+                  <div className="flex gap-3">
+                    <h1 className="font-bold ml-5">CMMS</h1>
+                    <div className="flex">
+                      <h1>Khách hàng: &nbsp;</h1>
+                      <div>
+                        {selectedName ? (
+                          <h1 className="text-blue-500 underline">
+                            {selectedName}
+                          </h1>
+                        ) : (
+                          <h1 className="text-red-500">Chưa chọn</h1>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <Button
+                        className="p-0 h-0"
+                        onClick={handleDeleteCus}
+                        variant="link"
+                      >
+                        Xóa
+                      </Button>
+                    </div>
+                  </div>
                   <div className="flex justify-between gap-5">
                     <h1 className="text-slate-400">{formattedDate}</h1>
                     <h1 className="text-slate-400">{formattedTime}</h1>
@@ -425,13 +471,13 @@ export default function OrderSellerPage() {
                     {showDropdown && (
                       <ul className="absolute left-0 z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {filteredData.length > 0 ? (
-                          filteredData.map((item, index) => (
+                          filteredData.map((item) => (
                             <li
-                              key={index}
+                              key={item.id}
                               className="p-2 hover:bg-blue-100 cursor-pointer"
-                              onMouseDown={() => setSearchTerm(item)}
+                              onMouseDown={() => handleSelectItem(item)}
                             >
-                              {item}
+                              {item.fullName} - {item.email}
                             </li>
                           ))
                         ) : (
@@ -443,16 +489,7 @@ export default function OrderSellerPage() {
                     )}
                   </div>
                   <div>
-                    <HoverCard openDelay={100} closeDelay={200}>
-                      <HoverCardTrigger>
-                        <Button variant="ghost" className="">
-                          <FaPlus size={22} />
-                        </Button>
-                      </HoverCardTrigger>
-                      <HoverCardContent className="p-2 w-full px-5">
-                        Thêm tài khoản
-                      </HoverCardContent>
-                    </HoverCard>
+                    <CreateCustomer />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 grid-rows-1 gap-4">
@@ -704,7 +741,9 @@ export default function OrderSellerPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {shipper.map((item) => (
-                      <SelectItem key={item} value={item}>{item}</SelectItem>
+                      <SelectItem key={item} value={item}>
+                        {item}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
