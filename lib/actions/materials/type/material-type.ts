@@ -24,6 +24,8 @@ export type IVariants = {
   sku: string;
   price: number;
   image: string;
+  conversionUnitId: string;
+  conversionUnitName : string;
   attributes: IAttribute[];
 };
 
