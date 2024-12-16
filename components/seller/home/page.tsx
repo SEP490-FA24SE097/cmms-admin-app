@@ -93,13 +93,14 @@ export default function SellerHome() {
   >({
     Email: keyword,
   });
+
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetCustomer(searchCusParams);
-
+  console.log(searchCusParams);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-
+    setKeyword(value);
     if (keyword === "") {
       const filtered = (customers?.data || []).filter((item) =>
         item.email.toLowerCase().includes(value.toLowerCase())
