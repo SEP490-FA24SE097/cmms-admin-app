@@ -20,6 +20,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
@@ -34,12 +43,17 @@ import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
 import { useSession } from "next-auth/react";
 import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
+import { ICustomer } from "@/lib/actions/customer/type/customer";
+import { useGetCustomer } from "@/lib/actions/customer/react-query/customer-query";
+import CreateCustomer from "../add-customer/page";
 
 export default function SellerHome() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
-  const [filteredData, setFilteredData] = useState<typeof data>([]); // Mảng chuỗi
+  const [selectedName, setSelectedName] = useState<string>(""); // Chuỗi nhập vào
+  const [keyword, setKeyword] = useState<string>(""); // Chuỗi nhập vào
+  const [filteredData, setFilteredData] = useState<ICustomer[]>([]); // Mảng chuỗi
   const [showDropdown, setShowDropdown] = useState(false); // Boolean
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,36 +77,47 @@ export default function SellerHome() {
       ...prev,
       page: currentPage,
     }));
-  }, [currentPage]);
+    setSearchCusParams((prev) => ({
+      ...prev,
+      Email: keyword,
+    }));
+  }, [currentPage, keyword]);
 
   interface Invoice {
     id: string; // Unique identifier for the invoice
     name: string; // Name of the invoice
     materials: Material[]; // List of selected materials for this invoice
   }
-  const data = [
-    { id: "KH000001", name: "Nguyễn Tấn Đạt" },
-    { id: "KH000002", name: "Nguyễn Anh Đức" },
-    { id: "KH000003", name: "Phan Văn Cường" },
-    { id: "KH000004", name: "Phạm Phú Hưng" },
-  ];
+  const [searchCusParams, setSearchCusParams] = useState<
+    Record<string, string | number | boolean>
+  >({
+    Email: keyword,
+  });
+
+  const { data: customers, isLoading: isLoadingCustomer } =
+    useGetCustomer(searchCusParams);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-
-    if (value.trim()) {
-      const filtered = data.filter((item) =>
-        item.name.toLowerCase().includes(value.toLowerCase())
+    setKeyword(value);
+    if (keyword === "") {
+      const filtered = (customers?.data || []).filter((item) =>
+        item.email.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredData(filtered);
+      setFilteredData(filtered); // `filtered` will always be an array
       setShowDropdown(true);
     } else {
+      setFilteredData([]); // Clear filteredData when dropdown is hidden
       setShowDropdown(false);
     }
   };
-
-  const handleSelectItem = (item: { id: string; name: string }) => {
-    setSearchTerm(item.name); // Set the input to the selected name
+  const handleDeleteCus = () => {
+    setSelectedName(""); // Set the input to the selected name
+    setSelectedId(null); // Save the selected ID
+  };
+  const handleSelectItem = (item: ICustomer) => {
+    setSearchTerm(item.fullName);
+    setSelectedName(item.fullName); // Set the input to the selected name
     setSelectedId(item.id); // Save the selected ID
     setShowDropdown(false); // Hide the dropdown
   };
@@ -123,14 +148,20 @@ export default function SellerHome() {
   const discount = 0;
   const totals = calculateTotals(activeInvoice);
   const storeItem = activeInvoice?.materials.map((item, index) => ({
-    materialId: item.materialId,  // Assuming each item in materials represents a materialId
+    materialId: item.materialId, // Assuming each item in materials represents a materialId
     quantity: item.quantity,
-    variantId: item.variantId,    // Replace '1' with the desired logic to calculate quantity
-}));
-
+    variantId: item.variantId, // Replace '1' with the desired logic to calculate quantity
+  }));
 
   const handlePaymentClick = async () => {
-
+    if (selectedId === null) {
+      toast({
+        title: "Vui lòng chọn khách hàng",
+        description: "Vui lòng chọn khách hàng ở phần tìm kiếm người dùng!",
+        variant: "destructive",
+      });
+      return;
+    }
     const result = {
       totalAmount: totals.totalPrice,
       salePrice: totals.totalPrice - discount,
@@ -139,7 +170,7 @@ export default function SellerHome() {
       customerId: selectedId,
       storeItems: storeItem,
     };
-  
+
     // If validation passes, proceed with the API call
     try {
       const response = await createQuickPayment(result);
@@ -355,7 +386,7 @@ export default function SellerHome() {
                           className="p-2 hover:bg-blue-100 cursor-pointer"
                           onMouseDown={() => handleSelectItem(item)}
                         >
-                          {item.name}
+                          {item.fullName} - {item.email}
                         </li>
                       ))
                     ) : (
@@ -363,19 +394,9 @@ export default function SellerHome() {
                     )}
                   </ul>
                 )}
-                
               </div>
               <div>
-                <HoverCard openDelay={100} closeDelay={200}>
-                  <HoverCardTrigger>
-                    <Button variant="ghost" className="">
-                      <FaPlus size={22} />
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="p-2 w-full px-5">
-                    Thêm tài khoản
-                  </HoverCardContent>
-                </HoverCard>
+                <CreateCustomer />
               </div>
               <div className="flex items-center">
                 <Sheet>
@@ -452,8 +473,26 @@ export default function SellerHome() {
                   </PaginationContent>
                 </Pagination>
               </div>
+              <div className="flex">
+                <h1>Khách hàng: &nbsp;</h1>
+                <div>
+                  {selectedName ? (
+                    <h1 className="text-blue-500 underline">{selectedName}</h1>
+                  ) : (
+                    <h1 className="text-red-500">Chưa chọn</h1>
+                  )}
+                </div>
+              </div>
               <div>
-                <Button onClick={handlePaymentClick} className=" bg-blue-600 px-20 py-7 text-2xl font-bold text-white hover:bg-blue-700">
+                <Button onClick={handleDeleteCus} variant="ghost">
+                  Xóa
+                </Button>
+              </div>
+              <div>
+                <Button
+                  onClick={handlePaymentClick}
+                  className=" bg-blue-600 px-20 py-7 text-2xl font-bold text-white hover:bg-blue-700"
+                >
                   Thanh toán
                 </Button>
               </div>
