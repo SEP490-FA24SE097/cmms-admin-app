@@ -19,6 +19,7 @@ export interface ApiListResponse<T> {
   pageCount?: number;
   totalPages?: number;
   error?: string;
+  total?: number;
 }
 export interface ApiSingleResponse<T> {
   data: T | null;
@@ -35,17 +36,18 @@ export async function apiRequest<T>(
     if (axios.isAxiosError(error) && error.response) {
       try {
         // Attempt to parse the response body as text if available
-        const errorMessage = typeof error.response.data === 'string'
-          ? error.response.data // If it's text, use as is
-          : JSON.stringify(error.response.data); // If JSON, stringify it
-          
+        const errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data // If it's text, use as is
+            : JSON.stringify(error.response.data); // If JSON, stringify it
+
         return { success: false, error: errorMessage };
       } catch (parseError) {
         console.error("Error parsing response body:", parseError);
         return { success: false, error: "Failed to parse error response." };
       }
     }
-    
+
     // For other types of errors, use a generic message or translateError
     return { success: false, error: translateError(error) };
   }
@@ -67,12 +69,13 @@ export async function fetchListDataWithPagi<T>(
   if (result.success) {
     const { data, pagination } = result.data;
     const totalPages = Math.ceil(pagination.total / pagination.perPage);
-
+    const total = pagination.total;
     return {
       success: true,
       data: {
         data: data || [],
-        totalPages, // Include totalPages in the response
+        totalPages,
+        total,
       },
     };
   }

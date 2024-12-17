@@ -96,7 +96,6 @@ export default function SellerHome() {
 
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetCustomer(searchCusParams);
-  console.log(searchCusParams);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
