@@ -5,8 +5,8 @@ import {
   ApiSingleResponse,
 } from "@/lib/api/api-handler/generic";
 import { useQuery } from "@tanstack/react-query";
-import { IMaterial } from "../type/material-type";
-import { getMaterialById, getMaterials } from "../action/material-action";
+import { IMaterial, IMaterialWarehouse } from "../type/material-type";
+import { getMaterialById, getMaterials, getMaterialsWarehouse } from "../action/material-action";
 
 // list material
 export const useGetMaterial = (
@@ -25,3 +25,16 @@ export const useGetMaterialById = (id: string) => {
     queryFn: () => getMaterialById(id),
   });
 };
+
+
+// obj material
+// list material
+export const useGetMaterialWarehouse = (
+  searchParams: Record<string, string | number | boolean>
+) => {
+  return useQuery<ApiListResponse<IMaterialWarehouse>>({
+    queryKey: ["MATERIAL_WAREHOUSE_LIST", searchParams],
+    queryFn: () => getMaterialsWarehouse(searchParams),
+  });
+};
+
