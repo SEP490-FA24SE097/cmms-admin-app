@@ -165,7 +165,7 @@ export default function SellerHome() {
     const result = {
       totalAmount: totals.totalPrice,
       salePrice: totals.totalPrice - discount,
-      customerPaid: 0,
+      customerPaid: totals.totalPrice,
       invoiceType: 0,
       customerId: selectedId,
       storeItems: storeItem,
@@ -473,7 +473,7 @@ export default function SellerHome() {
                   </PaginationContent>
                 </Pagination>
               </div>
-              <div className="flex">
+              <div className="flex text-sm">
                 <h1>Khách hàng: &nbsp;</h1>
                 <div>
                   {selectedName ? (

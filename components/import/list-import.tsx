@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { FaPlus } from "react-icons/fa";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -25,7 +25,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Popover,
   PopoverContent,
@@ -42,6 +50,13 @@ export default function ImportList() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
+  const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
+  const handleSupllierChange = (value: any) => {
+    const selectedStoreObject = suppliers?.data.find(
+      (item) => item.id === value
+    );
+    setSelectSuplier(selectedStoreObject || { id: "", name: "" }); // Handle potential missing store
+  };
   const formatDate = (date: Date | null) => {
     if (!date) return "";
     const day = date.getDate().toString().padStart(2, "0");
@@ -73,7 +88,17 @@ export default function ImportList() {
   const [searchParams, setSearchParams] = useState({
     page: currentPage,
     itemPerPage: 10,
+    isDateDescending: true,
+    supplierId: selectedSupplier.id,
   });
+  console.log(currentPage);
+  useEffect(() => {
+    setSearchParams((prev) => ({
+      ...prev,
+      page: currentPage,
+      supplierId: selectedSupplier.id,
+    }));
+  }, [selectedSupplier.id, currentPage]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: imports, isLoading: isLoadingImport } =
@@ -133,8 +158,8 @@ export default function ImportList() {
         <div className="space-y-5">
           <div className="bg-white shadow-lg p-5 rounded-xl">
             <h1 className="font-bold">Thời gian</h1>
-            <div className="flex items-center mt-2">
-              <h1 className="w-12">Từ :</h1>
+            <div className="flex flex-col gap-1 mt-2">
+              <h1 className="w-full">Từ ngày:</h1>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -161,8 +186,8 @@ export default function ImportList() {
               </Popover>
             </div>
 
-            <div className="flex items-center mt-2">
-              <h1 className="w-12">Đến :</h1>
+            <div className="flex flex-col gap-1 mt-2">
+              <h1 className="w-full">Đến ngày:</h1>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -192,7 +217,10 @@ export default function ImportList() {
           <div className="bg-white shadow-lg p-5 rounded-xl">
             <h1 className="font-bold">Nhà cung cấp</h1>
             <div className="mt-5">
-              <Select>
+              <Select
+                onValueChange={handleSupllierChange}
+                value={selectedSupplier.id}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn nhà cung cấp" />
                 </SelectTrigger>
@@ -224,17 +252,150 @@ export default function ImportList() {
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}
                   >
-                    <div>{item.id}</div>
+                    <div>{item.importCode}</div>
                     <div>{formatDateTime(item.timeStamp)}</div>
 
                     <div className="col-span-4 capitalize">
                       {item.supplierName}
                     </div>
-                    <div className="col-start-7">{item.totalDue}</div>
+                    <div className="col-start-7">
+                      {item.totalDue.toLocaleString("vi-VN")}
+                    </div>
                     <div className="col-start-8 capitalize">{item.status}</div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    Yes. It adheres to the WAI-ARIA design pattern.
+                  <AccordionContent className="pb-0">
+                    <div className="p-5 border bg-white">
+                      <h1 className="font-bold text-xl">Thông tin chi tiết</h1>
+                      <div className="grid grid-cols-3 grid-rows-1 gap-4 mt-5">
+                        <div className="col-span-2 space-y-3">
+                          <div className="flex gap-10 items-center">
+                            <div className="flex-1 flex gap-5 border-b p-2">
+                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                <div>Mã nhập hàng:</div>
+                                <div className="font-bold">
+                                  {item.importCode}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex-1 flex gap-5 border-b p-2">
+                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                <div>Nhà cung cấp:</div>
+                                <div className="capitalize">
+                                  {item.supplierName}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-10 items-center">
+                            <div className="flex-1 flex gap-5 border-b p-2">
+                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                <div>Trạng thái:</div>
+                                <div>{item.status}</div>
+                              </div>
+                            </div>
+                            <div className="flex-1 flex gap-5 border-b p-2">
+                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                <div>Thời gian:</div>
+                                <div className="">
+                                  {formatDateTime(item.timeStamp)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-10 items-center">
+                            <div className="w-full flex gap-5 border-b p-2">
+                              <div>Tên cửa hàng:</div>
+                              <div className="">
+                                {item.storeName ? item.storeName : "Kho tổng"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-10 items-center">
+                            <div className="flex w-full gap-5 border-b p-2">
+                              <div>Ghi chú:</div>
+                              <div>{item.note}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-start-3 pr-5 space-y-2">
+                          <div className="flex gap-5 justify-end">
+                            <h1>Tổng số lượng:</h1>
+                            <h1>{item.totalQuantity}</h1>
+                          </div>
+                          <div className="flex gap-5 justify-end">
+                            <h1>Tổng số mặt hàng:</h1>
+                            <h1>{item.totalProduct}</h1>
+                          </div>
+                          <div className="flex gap-5 justify-end">
+                            <h1>Tổng tiền hàng:</h1>
+                            <h1>{item.totalPice.toLocaleString("vi-VN")}</h1>
+                          </div>
+                          <div className="flex gap-5 justify-end">
+                            <h1>Giảm giá:</h1>
+                            <h1>
+                              {item.totalDiscount.toLocaleString("vi-VN")}
+                            </h1>
+                          </div>
+                          <div className="flex gap-5 justify-end">
+                            <h1 className="font-bold">Tổng cộng:</h1>
+                            <h1 className="font-bold">
+                              {item.totalDue.toLocaleString("vi-VN")}
+                            </h1>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <Table>
+                          <TableHeader className="bg-blue-200 pointer-events-none">
+                            <TableRow>
+                              <TableHead className="w-[100px]">
+                                Mã hàng
+                              </TableHead>
+                              <TableHead className="w-[200px]">
+                                Tên hàng
+                              </TableHead>
+                              <TableHead>Số lượng</TableHead>
+                              <TableHead>Đơn giá</TableHead>
+                              <TableHead>Giảm giá</TableHead>
+                              <TableHead>Giá nhập</TableHead>
+                              <TableHead>Thành tiền</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {item?.importDetails?.map((detail) => (
+                              <TableRow>
+                                <TableCell className="font-medium">
+                                  {detail.materialCode}
+                                </TableCell>
+                                <TableCell className="w-[200px]">
+                                  {detail.name}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {detail.quantity}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {detail.unitPrice.toLocaleString("vi-VN")}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {detail.unitDiscount.toLocaleString("vi-VN")}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {detail.unitImportPrice.toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {detail.priceAfterDiscount.toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

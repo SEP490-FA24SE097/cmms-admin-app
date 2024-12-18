@@ -9,22 +9,21 @@ import {
   apiRequest,
   fetchListDataWithPagi,
   fetchSingleData,
-  fetchListData,
 } from "@/lib/api/api-handler/generic";
-import { ICustomer } from "../type/customer";
-import { api, axiosAuth } from "@/lib/api/api-interceptor/api";
+import { api } from "@/lib/api/api-interceptor/api";
+import { IShippingDetails } from "../type/delivery-type";
 
 // form mẫu fetch list
-export async function getCustomers(
+export async function getShipping(
   searchParams: Record<string, string | number | boolean>
-): Promise<ApiListResponse<ICustomer>> {
+): Promise<ApiListResponse<IShippingDetails>> {
   noStore();
 
-  const result = await fetchListData<ICustomer>(
-    "/customers/get-customer-data-in-store",
+  const result = await fetchListDataWithPagi<IShippingDetails>(
+    "/shippingDetails/getShippingDetails",
     searchParams
   );
-
+  console.log(result);
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }
@@ -32,15 +31,17 @@ export async function getCustomers(
   return result.data;
 }
 
-export async function createAccount<T>(data: any): Promise<ApiListResponse<T>> {
+export async function updateShipping<T>(
+  data: any
+): Promise<ApiListResponse<T>> {
   noStore();
-  console.log(data);
-  const result = await apiRequest(() => axiosAuth.post("/customers", data));
-  console.log(result);
+  const result = await apiRequest(() =>
+    api.post("/shippingDetails/update-shippingDetail-status", data)
+  );
+
   if (!result.success) {
     return { data: [], error: result.error };
   }
-
   // Assuming the result.data contains the expected fields from the API response
   return {
     data: result.data.data ? [result.data.data] : [],
@@ -48,17 +49,16 @@ export async function createAccount<T>(data: any): Promise<ApiListResponse<T>> {
     totalPages: result.data.pagination?.total ?? 0,
   };
 }
-
-
-export async function createShipper<T>(data: any): Promise<ApiListResponse<T>> {
+export async function updateShippingFail<T>(
+  data: any
+): Promise<ApiListResponse<T>> {
   noStore();
-  console.log(data);
-  const result = await apiRequest(() => axiosAuth.post("/shippingDetails/add-shipper", data));
-  console.log(result);
+  const result = await apiRequest(() =>
+    api.post("/invoices/update-invoice", data)
+  );
   if (!result.success) {
     return { data: [], error: result.error };
   }
-
   // Assuming the result.data contains the expected fields from the API response
   return {
     data: result.data.data ? [result.data.data] : [],

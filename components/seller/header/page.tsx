@@ -23,9 +23,11 @@ import { useInvoiceContext } from "@/context/invoice-context";
 import { signOut, useSession } from "next-auth/react";
 import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
+import { useRouter } from "nextjs-toploader/app";
 
 export default function HeaderSeler() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
   const [filteredData, setFilteredData] = useState<Material[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
@@ -48,7 +50,6 @@ export default function HeaderSeler() {
       materialName: searchTerm,
     }));
   }, [searchTerm]);
-  // Gán kiểu cho materials
   // const materials: Material[] = [
   //   {
   //     id: "aad387e7-df7e-4bca-b163-591f6b6abd06",
@@ -252,52 +253,12 @@ export default function HeaderSeler() {
       </div>
 
       <div className="flex items-center justify-end">
-        <HoverCard openDelay={100} closeDelay={200}>
-          <HoverCardTrigger>
-            <Button variant="ghost" className="hover:bg-blue-900">
-              <FaShoppingBag className="text-white" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-2 w-full px-5">
-            Xử lý đặt hàng
-          </HoverCardContent>
-        </HoverCard>
-        <HoverCard openDelay={100} closeDelay={200}>
-          <HoverCardTrigger>
-            <Button variant="ghost" className="hover:bg-blue-900">
-              <FaShoppingBag className="text-white" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-2 w-full px-5">
-            Xử lý đặt hàng
-          </HoverCardContent>
-        </HoverCard>
-        <HoverCard openDelay={100} closeDelay={200}>
-          <HoverCardTrigger>
-            <Button variant="ghost" className="hover:bg-blue-900">
-              <FaShoppingBag className="text-white" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-2 w-full px-5">
-            Xử lý đặt hàng
-          </HoverCardContent>
-        </HoverCard>
-        <HoverCard openDelay={100} closeDelay={200}>
-          <HoverCardTrigger>
-            <Button variant="ghost" className="hover:bg-blue-900">
-              <FaShoppingBag className="text-white" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="p-2 w-full px-5">
-            Xử lý đặt hàng
-          </HoverCardContent>
-        </HoverCard>
         <div className="ml-5 flex gap-2 items-center">
           <h1 className="text-white">{session?.user.user.phoneNumber}</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="hover:bg-blue-900">
-                <IoIosOptions className="text-white" />
+                <IoIosOptions size={30} className="text-white" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -305,7 +266,9 @@ export default function HeaderSeler() {
               <DropdownMenuItem>Billing</DropdownMenuItem>
               <DropdownMenuItem>Team</DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut()}>
-                Đăng xuất
+                <Button variant="ghost" onClick={() => router.push("/login")}>
+                  Đăng xuất
+                </Button>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
