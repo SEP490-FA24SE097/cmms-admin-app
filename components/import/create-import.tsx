@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useSession } from "next-auth/react";
 import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
@@ -25,21 +25,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useGetSuplier } from "@/lib/actions/supplier/react-query/supplier-query";
 import { FaSave } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import { Textarea } from "@/components/ui/textarea";
-
-const removeVietnameseTones = (str: string) => {
-  return str
-    .normalize("NFD") // Chuyển ký tự có dấu thành tổ hợp ký tự
-    .replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu
-    .replace(/đ/g, "d") // Thay thế 'đ' thành 'd'
-    .replace(/Đ/g, "D"); // Thay thế 'Đ' thành 'D'
-};
+import { useGetStore } from "@/lib/actions/store/react-query/store-query";
+import { CreateImportAction } from "@/lib/actions/import/action/import-action";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "nextjs-toploader/app";
 
 export default function CreateImport() {
   const { data: session } = useSession();
+  const { toast } = useToast();
+  const router = useRouter();
   const {
     materials,
     addList,
@@ -51,11 +58,24 @@ export default function CreateImport() {
   } = useMaterialContext();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
   const [discount, setDiscount] = useState(0);
-  const [cusPaid, setCusPaid] = useState(0);
+  const [selectedStore, setSelectedStore] = useState({ id: "", name: "" });
+  const [where, setWhere] = useState("kho");
   const [filteredData, setFilteredData] = useState<Material[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const [supId, setSupId] = useState("");
+  const [note, setNote] = useState("");
+  const handleChangeNote = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(event.target.value);
+  };
+  const handleStoreChange = (value: any) => {
+    const selectedStoreObject = stores?.data.find((item) => item.id === value);
+    setSelectedStore(selectedStoreObject || { id: "", name: "" }); // Handle potential missing store
+  };
+  const handleValueChangeWhre = (value: string) => {
+    setWhere(value);
+  };
   const handleInputChangeNumber1 = (
     e: React.ChangeEvent<HTMLInputElement>,
     setState: React.Dispatch<React.SetStateAction<number>>
@@ -79,16 +99,16 @@ export default function CreateImport() {
     setState(newDiscount);
   };
 
-  const handleInputChangeNumber = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setState: React.Dispatch<React.SetStateAction<number>>
-  ) => {
-    // Lấy giá trị thô và loại bỏ các ký tự không phải số
-    const rawValue = e.target.value.replace(/[^0-9]/g, "");
+  // const handleInputChangeNumber = (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setState: React.Dispatch<React.SetStateAction<number>>
+  // ) => {
+  //   // Lấy giá trị thô và loại bỏ các ký tự không phải số
+  //   const rawValue = e.target.value.replace(/[^0-9]/g, "");
 
-    // Cập nhật state với giá trị số nguyên
-    setState(Number(rawValue));
-  };
+  //   // Cập nhật state với giá trị số nguyên
+  //   setState(Number(rawValue));
+  // };
   const now = new Date();
   const formattedDate = now.toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -102,12 +122,12 @@ export default function CreateImport() {
     minute: "2-digit",
     hour12: false,
   });
-  const storeId = session?.user.user.storeId;
+  const storeI123 = session?.user.user.storeId;
   const [searchParams, setSearchParams] = useState<
     Record<string, string | number | boolean>
   >({
     materialName: searchTerm,
-    storeId: storeId || "",
+    storeId: storeI123 || "",
   });
   useEffect(() => {
     setSearchParams((prev) => ({
@@ -122,6 +142,7 @@ export default function CreateImport() {
 
   //Fetch supplier
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
+  const { data: stores, isLoading: isLoadingStore } = useGetStore();
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -152,12 +173,74 @@ export default function CreateImport() {
     note: item.note,
   }));
   const handleOnSumit = async (isCompleted: boolean) => {
+    if (where === "store" && !selectedStore.id) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn cửa hàng!!!",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!supId) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn nhà cung cấp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!importDetails || importDetails.length === 0) {
+      toast({
+        title: "Lỗi",
+        description: "Danh sách chi tiết nhập hàng không được để trống.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const Data = {
+      supplierId: supId,
+      quantity: totals.totalQuantity,
+      totalPrice: totals.totalPrice,
+      totalDiscount: discount,
+      note: note,
       isCompleted: isCompleted,
+      timeStamp: now,
+      totalDue: totals.totalPrice - discount,
       importDetails: importDetails,
     };
-    console.log(Data);
+
+    try {
+      const response = await CreateImportAction(Data);
+      console.log(response);
+      if (response.success) {
+        toast({
+          title: "Thành công.",
+          description: "Tạo phiếu nhập thành công!!",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+        router.push("/import");
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
   };
+
   return (
     <div className="w-[80%] mx-auto h-full pt-5">
       <div className="grid grid-cols-7 h-full  grid-rows-1 gap-4">
@@ -234,7 +317,9 @@ export default function CreateImport() {
                                 </div>
                               </div>
                               <div className="text-blue-600 font-semibold">
-                                {item.materialPrice.toLocaleString("vi-VN", {
+                                {(
+                                  item.variantPrice || item.materialPrice
+                                ).toLocaleString("vi-VN", {
                                   style: "currency",
                                   currency: "vnd",
                                 })}
@@ -257,174 +342,217 @@ export default function CreateImport() {
                   <div>STT</div>
                 </div>
                 <div>Mã hàng</div>
-                <div className="col-span-4">Đơn hàng</div>
-                <div className="col-start-7">Số lượng</div>
-                <div className="col-start-8">Đơn giá</div>
-                <div className="col-start-9">Giảm giá</div>
-                <div className="col-start-10">Thành tiền</div>
+                <div className="col-span-3">Đơn hàng</div>
+                <div className="col-start-6">Số lượng</div>
+                <div className="col-start-7">Đơn giá</div>
+                <div className="col-start-8">Giảm giá</div>
+                <div className="col-start-19 col-span-2">Thành tiền</div>
               </div>
-              {materials.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`grid grid-cols-10 grid-rows-1 gap-4 p-3 border-t bg-white hover:bg-green-100 ${
-                    index === materials.length - 1 ? "border-b" : ""
-                  }`}
-                >
-                  <div className="grid grid-cols-2 grid-rows-1 gap-4 text-center ">
-                    <div>
-                      <button onClick={() => remove(item.id)}>
-                        <RiDeleteBin5Line size={20} />
-                      </button>
+              <div className="max-h-full overflow-y-auto">
+                {materials.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`grid grid-cols-10 grid-rows-1 gap-4 p-3 border-t bg-white hover:bg-green-100 ${
+                      index === materials.length - 1 ? "border-b" : ""
+                    }`}
+                  >
+                    <div className="grid grid-cols-2 grid-rows-1 gap-4 text-center ">
+                      <div>
+                        <button onClick={() => remove(item.id)}>
+                          <RiDeleteBin5Line size={20} />
+                        </button>
+                      </div>
+                      <div>{index + 1}</div>
                     </div>
-                    <div>{index + 1}</div>
-                  </div>
-                  <div>{item.materialCode || `SP0000${index + 1}`}</div>
-                  <div className="col-span-4">
-                    <div>
-                      <h1>{item.variantName || item.materialName}</h1>
-                      <Popover>
-                        <PopoverTrigger className="text-slate-500">
-                          {item.note ? (
-                            item.note
-                          ) : (
-                            <div className="flex items-center gap-3">
-                              Ghi chú <CiEdit className="hover:text-blue-500" />
-                            </div>
-                          )}
-                        </PopoverTrigger>
-                        <PopoverContent className={cn("p-0")}>
-                          <textarea
-                            value={item.note}
-                            onChange={(e) =>
-                              updateNote(item.id, e.target.value)
-                            } // Cập nhật note khi thay đổi
-                            className="w-full p-2 border rounded"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <div>{item.materialCode || `SP0000${index + 1}`}</div>
+                    <div className="col-span-3">
+                      <div>
+                        <h1>{item.variantName || item.materialName}</h1>
+                        <Popover>
+                          <PopoverTrigger className="text-slate-500">
+                            {item.note ? (
+                              item.note
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                Ghi chú{" "}
+                                <CiEdit className="hover:text-blue-500" />
+                              </div>
+                            )}
+                          </PopoverTrigger>
+                          <PopoverContent className={cn("p-0")}>
+                            <textarea
+                              value={item.note}
+                              onChange={(e) =>
+                                updateNote(item.id, e.target.value)
+                              } // Cập nhật note khi thay đổi
+                              className="w-full p-2 border rounded"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-start-7">
-                    <div className="flex justify-center items-center">
-                      {/* Nút giảm */}
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.id, false)}
-                        className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
-                      >
-                        <svg
-                          className="w-2.5 h-2.5 text-gray-900 dark:text-white"
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 18 2"
+                    <div className="col-start-6">
+                      <div className="flex justify-center items-center">
+                        {/* Nút giảm */}
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, false)}
+                          className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
                         >
-                          <path
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M1 1h16"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 18 2"
+                          >
+                            <path
+                              stroke="currentColor"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M1 1h16"
+                            />
+                          </svg>
+                        </button>
 
-                      {/* Hiển thị số lượng */}
+                        {/* Hiển thị số lượng */}
+                        <input
+                          type="text"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const newQuantity = parseInt(e.target.value);
+                            if (!isNaN(newQuantity)) {
+                              changeQuantity(item.id, newQuantity);
+                            }
+                          }}
+                          className="flex-shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
+                        />
+
+                        {/* Nút tăng */}
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, true)}
+                          className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+                        >
+                          <svg
+                            className="w-2.5 h-2.5 text-gray-900 dark:text-white"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 18 18"
+                          >
+                            <path
+                              stroke="currentColor"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 1v16M1 9h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="col-start-7">
+                      {(item.variantPrice || item.materialPrice).toLocaleString(
+                        "vi-VN"
+                      )}
+                    </div>
+                    <div className="col-start-8">
                       <input
                         type="text"
-                        value={item.quantity}
+                        value={item.discount} // Không sử dụng `toLocaleString` ở đây
                         onChange={(e) => {
-                          const newQuantity = parseInt(e.target.value);
-                          if (!isNaN(newQuantity)) {
-                            changeQuantity(item.id, newQuantity); // Gọi hàm updateQuantity từ context
-                          }
-                        }}
-                        className="flex-shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
-                      />
-
-                      {/* Nút tăng */}
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.id, true)}
-                        className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
-                      >
-                        <svg
-                          className="w-2.5 h-2.5 text-gray-900 dark:text-white"
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 18 18"
-                        >
-                          <path
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 1v16M1 9h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-start-8">
-                    {(item.variantPrice || item.materialPrice).toLocaleString(
-                      "vi-VN"
-                    )}
-                  </div>
-                  <div className="col-start-9">
-                    <input
-                      type="text"
-                      value={item.discount} // Không sử dụng `toLocaleString` ở đây
-                      onChange={(e) => {
-                        // Xóa dấu phân cách nếu có
-                        const newDiscount =
-                          parseInt(e.target.value.replace(/,/g, ""), 10) || 0;
-                        if (
-                          newDiscount >
-                          (item.variantPrice || item.materialPrice) *
-                            item.quantity
-                        ) {
-                          updateDiscount(
-                            item.id,
+                          // Xóa dấu phân cách nếu có
+                          const newDiscount =
+                            parseInt(e.target.value.replace(/,/g, ""), 10) || 0;
+                          if (
+                            newDiscount >
                             (item.variantPrice || item.materialPrice) *
                               item.quantity
-                          );
-                          return; // Dừng lại nếu discount vượt quá totalPrice
-                        }
-                        // Cập nhật giá trị discount qua context
-                        updateDiscount(item.id, newDiscount);
-                      }}
-                      onBlur={(e) => {
-                        // Định dạng lại giá trị sau khi rời khỏi input
-                        const formattedValue =
-                          item.discount.toLocaleString("vi-VN");
-                        e.target.value = formattedValue; // Hiển thị dạng phân cách
-                      }}
-                      className="w-full text-center border-b border-gray-300"
-                    />
+                          ) {
+                            updateDiscount(
+                              item.id,
+                              (item.variantPrice || item.materialPrice) *
+                                item.quantity
+                            );
+                            return; // Dừng lại nếu discount vượt quá totalPrice
+                          }
+                          // Cập nhật giá trị discount qua context
+                          updateDiscount(item.id, newDiscount);
+                        }}
+                        onBlur={(e) => {
+                          // Định dạng lại giá trị sau khi rời khỏi input
+                          const formattedValue =
+                            item.discount.toLocaleString("vi-VN");
+                          e.target.value = formattedValue; // Hiển thị dạng phân cách
+                        }}
+                        className="w-full text-center border-b border-gray-300"
+                      />
+                    </div>
+                    <div className="col-start-9 col-span-2">
+                      {(
+                        (item.variantPrice || item.materialPrice) *
+                          item.quantity -
+                        (item.discount || 0)
+                      ).toLocaleString("vi-VN")}
+                    </div>
                   </div>
-                  <div className="col-start-10">
-                    {(
-                      (item.variantPrice || item.materialPrice) *
-                        item.quantity -
-                      (item.discount || 0)
-                    ).toLocaleString("vi-VN")}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
         <div className="col-span-2 col-start-6 h-full bg-white border rounded-sm shadow-md p-3">
           <div className="flex flex-col h-full justify-between">
-            <div className="space-y-7">
+            <div className="space-y-5">
               <div className="flex justify-end">
                 <h1 className="text-slate-400">
                   {formattedDate} - {formattedTime}
                 </h1>
               </div>
-              <div className="flex items-center gap-5">
-                <h1>Chọn nhà cung cấp: </h1>
+              <div className="flex justify-between items-center gap-5">
+                <h1>Nhập hàng cho: </h1>
+                <Select onValueChange={handleValueChangeWhre} value={where}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Nhập tại" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="kho">Kho tổng</SelectItem>
+                      <SelectItem value="store">Cửa hàng</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              {where === "store" && (
+                <div className="flex justify-between items-center gap-5">
+                  <h1>Cửa hàng: </h1>
+                  <Select
+                    onValueChange={handleStoreChange}
+                    value={selectedStore.id}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Cửa hàng">
+                        {stores?.data === null
+                          ? "Đang tải..."
+                          : selectedStore.name || "Chọn cửa hàng"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {stores?.data?.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="flex justify-between items-center gap-5">
+                <h1>Nhà cung cấp: </h1>
 
                 <Popover open={open} onOpenChange={setOpen}>
                   <PopoverTrigger asChild>
@@ -432,7 +560,7 @@ export default function CreateImport() {
                       variant="outline"
                       role="combobox"
                       aria-expanded={open}
-                      className="w-[200px] justify-between"
+                      className="w-[180px] justify-between"
                     >
                       {value
                         ? suppliers?.data.find(
@@ -457,6 +585,7 @@ export default function CreateImport() {
                               setValue(
                                 currentValue === value ? "" : currentValue
                               );
+                              setSupId(supplier.id);
                               setOpen(false);
                             }}
                           >
@@ -503,16 +632,9 @@ export default function CreateImport() {
                   {(totals.totalPrice - discount).toLocaleString("vi-VN")}
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <h1>Tiền trả nhà cung cấp:</h1>
-                <div className="">
-                  <input
-                    type="text"
-                    onChange={(e) => handleInputChangeNumber(e, setCusPaid)}
-                    className="text-end w-24 border-b"
-                    value={cusPaid.toLocaleString("vi-VN")}
-                  />
-                </div>
+              <div>
+                <h1 className="mb-2">Ghi chú</h1>
+                <Textarea onChange={handleChangeNote} value={note} />
               </div>
             </div>
             <div className="flex justify-center">
@@ -520,7 +642,7 @@ export default function CreateImport() {
                 <div>
                   <Button
                     onClick={() => handleOnSumit(false)}
-                    className="w-full py-10 bg-blue-500 text-2xl mb-5 font-bold text-white hover:bg-green-600"
+                    className="w-full py-10 bg-blue-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
                   >
                     <FaSave /> Tạm lưu
                   </Button>
@@ -528,7 +650,7 @@ export default function CreateImport() {
                 <div>
                   <Button
                     onClick={() => handleOnSumit(true)}
-                    className="w-full py-10 bg-green-500 text-2xl mb-5 font-bold text-white hover:bg-green-600"
+                    className="w-full py-10 bg-green-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
                   >
                     <MdOutlineDownloadDone /> Hoàn thành
                   </Button>

@@ -4,7 +4,7 @@ import NavHeader from "@/components/manager/nav-header/page";
 
 export default function ImportPage() {
   return (
-    <div className="bg-slate-100 h-screen">
+    <div className="bg-slate-200 min-h-screen pb-5">
       <ManagerHeader />
       <NavHeader />
       <ImportList />
