@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
-import {useSearchParams } from "next/navigation";
-import { useRouter } from 'nextjs-toploader/app';
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { z } from "zod";
@@ -23,7 +23,6 @@ import {
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 // import { jwtDecode } from "jwt-decode";
-
 
 export default function LoginPage() {
   const router = useRouter();
@@ -103,10 +102,10 @@ export default function LoginPage() {
   };
 
   const { toast } = useToast();
-//   const handleNavigation = (path: string) => {
-//     setIsLoadingPage(true);
-//     router.push(path);
-//   };
+  //   const handleNavigation = (path: string) => {
+  //     setIsLoadingPage(true);
+  //     router.push(path);
+  //   };
   return (
     <main className="bg-[#26313c] h-screen flex items-center justify-center p-10">
       {isLoadingPage && (
@@ -189,7 +188,7 @@ export default function LoginPage() {
                   type="submit"
                   className="w-full mt-5 rounded-full font-bold bg-gray-600  "
                 >
-                  Loading...
+                  Đang tải...
                 </Button>
               ) : (
                 <Button

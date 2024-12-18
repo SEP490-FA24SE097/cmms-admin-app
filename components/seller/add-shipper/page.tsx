@@ -30,31 +30,50 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import axios from "axios";
 
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { createAccount } from "@/lib/actions/customer/action/customer-action";
+import {
+  createAccount,
+  createShipper,
+} from "@/lib/actions/customer/action/customer-action";
+import { useGetStore } from "@/lib/actions/store/react-query/store-query";
 
 type Location = {
   value: string;
   label: string;
 };
-export default function CreateCustomer() {
+export default function CreateShipper() {
   const { toast } = useToast();
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState<string>("");
+  const [usename, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
-
+  const [openForm, setForm] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
-
+  const [selectedStore, setSelectedStore] = useState({ id: "", name: "" });
+  const { data: stores, isLoading: isLoadingStore } = useGetStore();
+  const handleStoreChange = (value: any) => {
+    const selectedStoreObject = stores?.data.find((item) => item.id === value);
+    setSelectedStore(selectedStoreObject || { id: "", name: "" }); // Handle potential missing store
+  };
   const tinh = provinces.find(
     (province) => province.value === selectedProvince
   )?.label;
@@ -184,15 +203,19 @@ export default function CreateCustomer() {
       district: huyen,
       ward: xa,
       address: address,
+      storeId: selectedStore.id,
+      username: usename,
+      password: password,
     };
     console.log(Data);
     try {
-      const response = await createAccount(Data);
+      const response = await createShipper(Data);
       if (response.data) {
         toast({
           title: "Đăng ký thành công",
           style: { backgroundColor: "#73EC8B", color: "#ffffff" },
         });
+        setForm(false);
       } else if (response.error) {
         toast({
           title: response.error,
@@ -214,20 +237,40 @@ export default function CreateCustomer() {
       <HoverCard openDelay={100} closeDelay={200}>
         <HoverCardTrigger>
           {" "}
-          <Dialog>
+          <Dialog open={openForm} onOpenChange={setForm}>
             <DialogTrigger asChild>
               <FaPlus size={22} />
             </DialogTrigger>
             <DialogContent>
-              <h1 className="text-2xl font-bold">Thêm khách hàng</h1>
+              <h1 className="text-2xl font-bold">Thêm nhân viên vận chuyển</h1>
               <div className="mt-5 space-y-3">
                 <div className="flex items-center ">
-                  <h1 className="w-[30%] font-bold">Tên khách hàng:</h1>
+                  <h1 className="w-[30%] font-bold">Tên nhân viên:</h1>
                   <Input
                     className="w-[65%]"
                     placeholder="Họ và tên"
                     value={customerName} // Gắn state vào value
                     onChange={(e) => setCustomerName(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center">
+                  <h1 className="w-[30%] font-bold">Tên đăng nhập:</h1>
+                  <Input
+                    type="text"
+                    className="w-[65%]"
+                    placeholder="Tên đăng nhâp"
+                    value={usename}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center">
+                  <h1 className="w-[30%] font-bold">Mật khẩu:</h1>
+                  <Input
+                    type="password"
+                    className="w-[65%]"
+                    placeholder="Mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
                 <div className="flex items-center">
@@ -249,6 +292,32 @@ export default function CreateCustomer() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <h1 className="w-[30%] font-bold">Chọn cửa hàng</h1>
+                <div className="w-[65%]">
+                  <Select
+                    onValueChange={handleStoreChange}
+                    value={selectedStore.id}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Cửa hàng">
+                        {stores?.data === null
+                          ? "Đang tải..."
+                          : selectedStore.name || "Chọn cửa hàng"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {stores?.data?.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="flex items-center">
@@ -433,7 +502,7 @@ export default function CreateCustomer() {
           </Dialog>
         </HoverCardTrigger>
         <HoverCardContent className="p-2 w-full px-5">
-          Thêm khách hàng
+          Thêm nhân viên vận chuyển
         </HoverCardContent>
       </HoverCard>
     </div>

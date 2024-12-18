@@ -24,7 +24,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -37,8 +39,15 @@ import { Material } from "@/lib/actions/material-store/type/material-store";
 import CreateCustomer from "../add-customer/page";
 import { useGetCustomer } from "@/lib/actions/customer/react-query/customer-query";
 import { ICustomer } from "@/lib/actions/customer/type/customer";
+import { useToast } from "@/hooks/use-toast";
+import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
+import CreateShipper from "../add-shipper/page";
+import { useGetShipper } from "@/lib/actions/shipper/react-query/shipper-query";
+import { getShipPrice } from "@/lib/actions/shipper/action/shipper-action";
+import { Loader2 } from "lucide-react";
 export default function OrderSellerPage() {
   const [keyword, setKeyword] = useState<string>(""); // Chuỗi nhập vào
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
   const [filteredData, setFilteredData] = useState<ICustomer[]>([]); // Mảng chuỗi
   const [selectedName, setSelectedName] = useState<string>(""); // Chuỗi nhập vào
@@ -46,6 +55,19 @@ export default function OrderSellerPage() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const [discount, setDiscount] = useState(0);
   const [customerPaid, setCustomerPaid] = useState(0);
+  const [selectedShipper, setSelectedShipper] = useState({
+    id: "",
+    fullName: "",
+  });
+  const [selectedPrice, setSelectedPrice] = useState({
+    shippingFee: 0,
+    totalWeight: 0,
+    shippingDistance: 0,
+  });
+  const handleShipChange = (value: any) => {
+    const selectedShipObject = shippers?.data.find((item) => item.id === value);
+    setSelectedShipper(selectedShipObject || { id: "", fullName: "" }); // Handle potential missing store
+  };
   const handleInputChangeNumber = (
     e: React.ChangeEvent<HTMLInputElement>,
     setState: React.Dispatch<React.SetStateAction<number>>
@@ -89,11 +111,60 @@ export default function OrderSellerPage() {
     updateQuantity,
     handleQuantityChange,
     handleRemoveMaterial,
+    handleRemoveInvoice,
   } = useInvoiceContext();
 
+  const { data: shippers, isLoading: isLoadingShipper } = useGetShipper();
+
   const activeInvoice = invoices[activeInvoiceIndex];
+
+  const handleGetPrice = async () => {
+    if (activeInvoice.materials.length === 0) {
+      toast({
+        title: "Không có vật liệu",
+        description: "Vui lòng chọn vật liệu ở phần tìm kiếm vật liệu!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedWard) {
+      toast({
+        title: "Không có địa chỉ",
+        description: "Vui lòng chọn nhập địa chỉ!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const data = {
+      storeItems: activeInvoice.materials,
+      deliveryAddress: fullAddress,
+    };
+    setIsLoadingPrice(true);
+    const result = await getShipPrice(data);
+
+    if (result && result.data) {
+      // Update cartData and reset total price based on response
+      setSelectedPrice({
+        shippingFee: result.data.shippingFee || 0,
+        totalWeight: result.data.totalWeight || 0,
+        shippingDistance: result.data.shippingDistance || 0,
+      });
+      setIsLoadingPrice(false);
+    } else {
+      toast({
+        title: "Có lỗi xảy ra",
+        description: "Vui lòng thử lại sau!",
+        variant: "destructive",
+      });
+      setIsLoadingPrice(false);
+      return;
+    }
+  };
+
   const calculateTotals = (invoice: Invoice) => {
-    const totals = invoice.materials.reduce(
+    const totals = invoice?.materials.reduce(
       (acc, material) => {
         acc.totalQuantity += material.quantity;
         acc.totalPrice += material.materialPrice * material.quantity;
@@ -106,10 +177,10 @@ export default function OrderSellerPage() {
   };
   const totals = calculateTotals(activeInvoice);
 
-  const [amountDue, setAmountDue] = useState(totals.totalPrice - discount);
+  const [amountDue, setAmountDue] = useState(totals?.totalPrice - discount);
   useEffect(() => {
-    setAmountDue(totals.totalPrice - discount);
-  }, [discount, totals.totalPrice]);
+    setAmountDue(totals?.totalPrice - discount);
+  }, [discount, totals?.totalPrice]);
 
   const [name, setName] = useState<string | null>();
   const [email, setEmail] = useState<string | null>();
@@ -120,30 +191,33 @@ export default function OrderSellerPage() {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
-
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedWard, setSelectedWard] = useState<string>("");
-
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [openProvince, setOpenProvince] = useState(false);
   const [openDistrict, setOpenDistrict] = useState(false);
   const [openWard, setOpenWard] = useState(false);
-  //   const fullAddress = `${address ?? ""}, ${
-  //     selectedWard
-  //       ? wards.find((ward) => ward.value === selectedWard)?.label + ", "
-  //       : ""
-  //   }${
-  //     selectedDistrict
-  //       ? districts.find((district) => district.value === selectedDistrict)
-  //           ?.label + ", "
-  //       : ""
-  //   }${
-  //     selectedProvince
-  //       ? provinces.find((province) => province.value === selectedProvince)?.label
-  //       : ""
-  //   }`.trim();
+  const fullAddress = `${address ?? ""}, ${
+    selectedWard
+      ? wards.find((ward) => ward.value === selectedWard)?.label + ", "
+      : ""
+  }${
+    selectedDistrict
+      ? districts.find((district) => district.value === selectedDistrict)
+          ?.label + ", "
+      : ""
+  }${
+    selectedProvince
+      ? provinces.find((province) => province.value === selectedProvince)?.label
+      : ""
+  }`.trim();
 
   // console.log(paymentType);
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(event.target.value);
   };
@@ -220,6 +294,9 @@ export default function OrderSellerPage() {
     setSearchTerm(item.fullName);
     setSelectedName(item.fullName); // Set the input to the selected name
     setSelectedId(item.id); // Save the selected ID
+    setName(item.fullName);
+    setPhone(item.phoneNumber);
+    setEmail(item.email);
     setShowDropdown(false); // Hide the dropdown
   };
   useEffect(() => {
@@ -228,7 +305,6 @@ export default function OrderSellerPage() {
       Email: keyword,
     }));
   }, [keyword]);
-  const shipper: string[] = ["Cường", "Hưng", "Đạt", "Mẫn"];
 
   // Fetch wards based on selected district
   useEffect(() => {
@@ -249,6 +325,94 @@ export default function OrderSellerPage() {
     }
     setSelectedWard("");
   }, [selectedDistrict]);
+  const storeItem = activeInvoice?.materials.map((item, index) => ({
+    materialId: item.materialId, // Assuming each item in materials represents a materialId
+    quantity: item.quantity,
+    variantId: item.variantId, // Replace '1' with the desired logic to calculate quantity
+  }));
+  const handlePaymentClick = async () => {
+    if (selectedPrice.shippingFee === 0) {
+      toast({
+        title: "Vui lòng lấy tiền ship",
+        description: "Vui lòng lấy tiền ship ở phần lấy giá ship!",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!selectedShipper.id) {
+      toast({
+        title: "Vui lòng chọn nhân viên vận chuyển",
+        description: "Vui lòng chọn nhân viên giao hàng ở phần tìm kiếm!",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedId === null) {
+      toast({
+        title: "Vui lòng chọn khách hàng",
+        description: "Vui lòng chọn khách hàng ở phần tìm kiếm người dùng!",
+        variant: "destructive",
+      });
+      return;
+    }
+    const result = {
+      totalAmount: totals?.totalPrice,
+      salePrice: totals?.totalPrice - discount,
+      customerPaid: 0,
+      invoiceType: 1,
+      customerId: selectedId,
+      storeItems: storeItem,
+      note: note,
+      shippingFee: selectedPrice.shippingFee,
+      address: fullAddress,
+      phoneReceive: phone,
+      shipperId: selectedShipper.id,
+    };
+
+    // If validation passes, proceed with the API call
+    try {
+      setIsLoadingPayment(true);
+      const response = await createQuickPayment(result);
+
+      // Check if the response indicates success
+      if (response.data?.success) {
+        toast({
+          title: "Thanh toán đã được thực hiện thành công.",
+          description: "Cảm ơn bạn vì đã chọn mua hàng ở chúng tôi!",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        handleRemoveInvoice(activeInvoiceIndex);
+        setIsLoadingPayment(false);
+        // // Redirect to the home page after a short delay
+        // setTimeout(() => {
+        //   window.location.href = "/home";
+        // }, 2000);
+      } else {
+        // Handle cases where the response indicates failure
+        toast({
+          title: "Lỗi",
+          description: "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+        setIsLoadingPayment(false);
+        console.error("Unexpected Payment Response:", response);
+      }
+    } catch (error) {
+      // Handle network or unexpected errors
+      toast({
+        title: "Lỗi",
+        description: "Thanh toán thất bại. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      setIsLoadingPayment(false);
+      console.error("Payment failed with exception:", error);
+    }
+  };
+
   return (
     <div className="grid w-full h-full grid-cols-5 grid-rows-1 gap-4">
       <div className="col-span-2">
@@ -367,10 +531,10 @@ export default function OrderSellerPage() {
               <div className="col-span-3 gap-3 justify-center flex flex-col h-full col-start-3">
                 <div className="flex justify-between gap-10 mx-5">
                   <div>
-                    Tổng tiền hàng: <span>{totals.totalQuantity}</span>
+                    Tổng tiền hàng: <span>{totals?.totalQuantity}</span>
                   </div>
                   <div className="font-bold">
-                    {totals.totalPrice.toLocaleString("vi-VN", {
+                    {totals?.totalPrice.toLocaleString("vi-VN", {
                       style: "currency",
                       currency: "vnd",
                     })}
@@ -501,7 +665,7 @@ export default function OrderSellerPage() {
                       className="w-full"
                       type="text"
                       id="name"
-                      readOnly
+                      onChange={handleNameChange}
                       value={name ?? ""}
                       placeholder="Tên người nhận"
                     />
@@ -693,6 +857,42 @@ export default function OrderSellerPage() {
                     placeholder="Nhập ghi chú vào đây."
                   />
                 </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex gap-5">
+                    <Label className="text-[16px]">Thông tin vận chuyển:</Label>
+                    <div className="text-[14px]">
+                      <h1>
+                        Phí vận chuyển:{" "}
+                        <span className="font-bold">
+                          {selectedPrice.shippingFee.toLocaleString("vi-VN")}
+                        </span>
+                      </h1>
+                      <h1>
+                        Khoảng cách:{" "}
+                        <span className="font-bold">
+                          {selectedPrice.shippingDistance.toLocaleString(
+                            "vi-VN"
+                          )}
+                          m
+                        </span>
+                      </h1>
+                    </div>
+                  </div>
+                  {isLoadingPrice ? (
+                    <Button disabled>
+                      <Loader2 className="animate-spin" />
+                      Đang lấy...
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={handleGetPrice}
+                    >
+                      {" "}
+                      Lấy tiền ship
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="px-5 py-8">
                 <div className="flex justify-between">
@@ -732,27 +932,49 @@ export default function OrderSellerPage() {
                 <MdDeliveryDining size={30} />
                 Vận chuyển
               </div>
-
+              <div className="flex items-center gap-5 mt-5">
+                <h1 className="">Tạo nhân viên giao hàng</h1>
+                <CreateShipper />
+              </div>
               <h1 className="mt-5">Chọn nhân viên giao hàng</h1>
               <div className="mt-5">
-                <Select>
+                <Select
+                  onValueChange={handleShipChange}
+                  value={selectedShipper.id}
+                >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn đối tác" />
+                    <SelectValue placeholder="Cửa hàng">
+                      {shippers?.data === null
+                        ? "Đang tải..."
+                        : selectedShipper.fullName || "Chọn cửa hàng"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {shipper.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
+                    <SelectGroup>
+                      {shippers?.data?.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Button className="text-2xl font-bold w-full py-10 bg-blue-500 text-white hover:bg-blue-700">
-                Thanh toán
-              </Button>
+              {isLoadingPayment ? (
+                <Button className="text-2xl font-bold w-full py-10" disabled>
+                  <Loader2 className="animate-spin" />
+                  Đang tải...
+                </Button>
+              ) : (
+                <Button
+                  onClick={handlePaymentClick}
+                  className="text-2xl font-bold w-full py-10 bg-blue-500 text-white hover:bg-blue-700"
+                >
+                  Thanh toán
+                </Button>
+              )}
             </div>
           </div>
         </div>
