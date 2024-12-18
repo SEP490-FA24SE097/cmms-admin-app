@@ -5,6 +5,8 @@ export type IImport = {
   importCode: string;
   status: string;
   note: string;
+  storeName: string;
+  storeId: string;
   totalQuantity: number;
   totalProduct: number;
   totalPice: number;

@@ -7,6 +7,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { IImport, IMaterialImport } from "../type/import-type";
 import { getImports, getMaterialsImport } from "../action/import-action";
+import { Material } from "../../material-store/type/material-store";
 
 // list material
 export const useGetImport = (
@@ -18,7 +19,7 @@ export const useGetImport = (
   });
 };
 export const useGetMaterialImport = () => {
-  return useQuery<ApiListResponse<IMaterialImport>>({
+  return useQuery<ApiListResponse<Material>>({
     queryKey: ["IMPORT_MATERIAL_LIST"],
     queryFn: () => getMaterialsImport(),
   });

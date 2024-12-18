@@ -88,14 +88,17 @@ export default function ImportList() {
   const [searchParams, setSearchParams] = useState({
     page: currentPage,
     itemPerPage: 10,
+    isDateDescending: true,
     supplierId: selectedSupplier.id,
   });
+  console.log(currentPage);
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
+      page: currentPage,
       supplierId: selectedSupplier.id,
     }));
-  }, [selectedSupplier.id]);
+  }, [selectedSupplier.id, currentPage]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: imports, isLoading: isLoadingImport } =
@@ -300,6 +303,14 @@ export default function ImportList() {
                             </div>
                           </div>
                           <div className="flex gap-10 items-center">
+                            <div className="w-full flex gap-5 border-b p-2">
+                              <div>Tên cửa hàng:</div>
+                              <div className="">
+                                {item.storeName ? item.storeName : "Kho tổng"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-10 items-center">
                             <div className="flex w-full gap-5 border-b p-2">
                               <div>Ghi chú:</div>
                               <div>{item.note}</div>
@@ -326,8 +337,10 @@ export default function ImportList() {
                             </h1>
                           </div>
                           <div className="flex gap-5 justify-end">
-                            <h1>Tổng cộng:</h1>
-                            <h1>{item.totalDue.toLocaleString("vi-VN")}</h1>
+                            <h1 className="font-bold">Tổng cộng:</h1>
+                            <h1 className="font-bold">
+                              {item.totalDue.toLocaleString("vi-VN")}
+                            </h1>
                           </div>
                         </div>
                       </div>

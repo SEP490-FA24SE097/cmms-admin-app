@@ -42,6 +42,7 @@ import { useGetStore } from "@/lib/actions/store/react-query/store-query";
 import { CreateImportAction } from "@/lib/actions/import/action/import-action";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "nextjs-toploader/app";
+import { useGetMaterialImport } from "@/lib/actions/import/react-quert/import-query";
 
 export default function CreateImport() {
   const { data: session } = useSession();
@@ -122,23 +123,10 @@ export default function CreateImport() {
     minute: "2-digit",
     hour12: false,
   });
-  const storeI123 = session?.user.user.storeId;
-  const [searchParams, setSearchParams] = useState<
-    Record<string, string | number | boolean>
-  >({
-    materialName: searchTerm,
-    storeId: storeI123 || "",
-  });
-  useEffect(() => {
-    setSearchParams((prev) => ({
-      ...prev,
-      materialName: searchTerm,
-    }));
-  }, [searchTerm]);
 
   // Fetch material store list
   const { data: materialsList, isLoading: isLoadingMaterialData } =
-    useGetMaterialStore(searchParams);
+    useGetMaterialImport();
 
   //Fetch supplier
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
@@ -157,7 +145,9 @@ export default function CreateImport() {
   };
   const totals = materials.reduce(
     (acc, item) => {
-      const totalPrice = item.materialPrice * item.quantity - item.discount;
+      const totalPrice =
+        ((item.variantPrice || item.materialPrice) - item.discount) *
+        item.quantity;
       acc.totalQuantity += item.quantity;
       acc.totalPrice += totalPrice;
       return acc;
@@ -169,9 +159,14 @@ export default function CreateImport() {
     materialId: item.materialId,
     variantId: item.variantId,
     quantity: item.quantity,
-    unitPrice: item.discount,
+    unitPrice: item.variantPrice || item.materialPrice,
+    unitDiscount: item.discount,
+    priceAfterDiscount:
+      ((item.variantPrice || item.materialPrice) - item.discount) *
+      item.quantity,
     note: item.note,
   }));
+
   const handleOnSumit = async (isCompleted: boolean) => {
     if (where === "store" && !selectedStore.id) {
       toast({
@@ -204,16 +199,16 @@ export default function CreateImport() {
       quantity: totals.totalQuantity,
       totalPrice: totals.totalPrice,
       totalDiscount: discount,
+      storeId: selectedStore.id,
       note: note,
       isCompleted: isCompleted,
       timeStamp: now,
       totalDue: totals.totalPrice - discount,
       importDetails: importDetails,
     };
-
+    console.log(Data);
     try {
       const response = await CreateImportAction(Data);
-      console.log(response);
       if (response.success) {
         toast({
           title: "Thành công.",
@@ -346,7 +341,7 @@ export default function CreateImport() {
                 <div className="col-start-6">Số lượng</div>
                 <div className="col-start-7">Đơn giá</div>
                 <div className="col-start-8">Giảm giá</div>
-                <div className="col-start-19 col-span-2">Thành tiền</div>
+                <div className="col-start-9 col-span-2">Thành tiền</div>
               </div>
               <div className="max-h-full overflow-y-auto">
                 {materials.map((item, index) => (
@@ -492,9 +487,9 @@ export default function CreateImport() {
                     </div>
                     <div className="col-start-9 col-span-2">
                       {(
-                        (item.variantPrice || item.materialPrice) *
-                          item.quantity -
-                        (item.discount || 0)
+                        ((item.variantPrice || item.materialPrice) -
+                          (item.discount || 0)) *
+                        item.quantity
                       ).toLocaleString("vi-VN")}
                     </div>
                   </div>
@@ -642,7 +637,7 @@ export default function CreateImport() {
                 <div>
                   <Button
                     onClick={() => handleOnSumit(false)}
-                    className="w-full py-10 bg-blue-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
+                    className="w-full py-10 bg-blue-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-blue-600"
                   >
                     <FaSave /> Tạm lưu
                   </Button>
