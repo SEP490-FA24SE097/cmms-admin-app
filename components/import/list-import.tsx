@@ -364,7 +364,7 @@ export default function ImportList() {
                           </TableHeader>
                           <TableBody>
                             {item?.importDetails?.map((detail) => (
-                              <TableRow>
+                              <TableRow key={detail.materialCode}>
                                 <TableCell className="font-medium">
                                   {detail.materialCode}
                                 </TableCell>

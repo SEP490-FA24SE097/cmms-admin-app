@@ -508,7 +508,7 @@ export default function ListRequestStore() {
             </TableHeader>
             <TableBody>
               {request?.data.map((item) => (
-                <TableRow>
+                <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     {item.requestCode}
                   </TableCell>

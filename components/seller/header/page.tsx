@@ -262,13 +262,8 @@ export default function HeaderSeler() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut()}>
-                <Button variant="ghost" onClick={() => router.push("/login")}>
-                  Đăng xuất
-                </Button>
+                Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -73,6 +73,16 @@ export default function LoginPage() {
             console.error("Error decoding token:", error);
           }
         }
+
+        if (userRole === "Senior_Management") {
+          router.push("/manage/dashboard");
+        }
+        if (userRole === "Store_Manager") {
+          router.push("/store-request");
+        }
+        if (userRole === "Sale_Staff") {
+          router.push("/home");
+        }
         if (userRole === "Shipper_Store") {
           router.push("/shipper");
         } else {

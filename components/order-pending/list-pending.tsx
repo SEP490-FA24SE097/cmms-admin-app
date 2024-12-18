@@ -457,7 +457,7 @@ export default function OrderPending() {
                           </TableHeader>
                           <TableBody>
                             {item.invoiceDetails?.map((detail) => (
-                              <TableRow>
+                              <TableRow key={detail.materialId}>
                                 <TableCell>
                                   {detail.imageUrl ? (
                                     <img

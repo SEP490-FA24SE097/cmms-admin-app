@@ -1,10 +1,14 @@
 "use server";
 
-import { IMaterial, IMaterialWarehouse, IMaterialPost, IUnit } from "./../type/material-type";
+import {
+  IMaterial,
+  IMaterialWarehouse,
+  IMaterialPost,
+  IUnit,
+} from "./../type/material-type";
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 import { axiosAuth } from "@/lib/api/api-interceptor/api";
-
 
 import {
   Result,
@@ -15,31 +19,21 @@ import {
   fetchSingleData,
 } from "@/lib/api/api-handler/generic";
 
-
-
 export async function createMaterial(
   data: any
 ): Promise<ApiSingleResponse<IMaterialPost>> {
   noStore();
-  const result = await apiRequest(() =>
-    axiosAuth.post("/materials", data)
-  );
-  console.log('result', result);
+  const result = await apiRequest(() => axiosAuth.post("/materials", data));
+  console.log("result", result);
   if (!result.success) {
     return { data: null, error: result.error };
   }
   return result.data;
 }
 
-export async function createUnit(
-  data: any
-): Promise<ApiSingleResponse<IUnit>> {
+export async function createUnit(data: any): Promise<ApiSingleResponse<IUnit>> {
   noStore();
-  console.log('data', data);
-  const result = await apiRequest(() =>
-    axiosAuth.post("/units", data)
-  );
-  console.log('result', result);
+  const result = await apiRequest(() => axiosAuth.post("/units", data));
   if (!result.success) {
     return { data: null, error: result.error };
   }
@@ -57,13 +51,10 @@ export async function getMaterialsWarehouse(
     searchParams
   );
 
-  console.log(searchParams);
-  console.log(result);
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }
   return result.data;
-  
 }
 
 // form mẫu fetch list
@@ -84,7 +75,6 @@ export async function getMaterials(
   return result.data;
 }
 
-
 // form mẫu fetch object => data by id
 export async function getMaterialById(
   id: string
@@ -96,7 +86,3 @@ export async function getMaterialById(
 
   return result.data;
 }
-
-
-
-
