@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import SessionProviders from "@/providers/session-provider";
 import NextTopLoader from "nextjs-toploader";
+import { RoleProvider } from "@/providers/role-context";
 const roboto = Roboto({ weight: "400", subsets: ["vietnamese"] });
 
 export const metadata: Metadata = {
@@ -22,10 +23,12 @@ export default function RootLayout({
       <body className={`${roboto.className} antialiased`}>
         <NextTopLoader height={5} />
         <SessionProviders>
-          <QueryProvider>
-            {children}
-            <Toaster />
-          </QueryProvider>
+          <RoleProvider>
+            <QueryProvider>
+              {children}
+              <Toaster />
+            </QueryProvider>
+          </RoleProvider>
         </SessionProviders>
       </body>
     </html>

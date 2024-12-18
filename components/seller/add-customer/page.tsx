@@ -18,7 +18,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Check, ChevronsUpDown } from "lucide-react";
-
+import { Loader2 } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import {
   DropdownMenu,
@@ -44,6 +44,8 @@ type Location = {
 export default function CreateCustomer() {
   const { toast } = useToast();
   const [customerName, setCustomerName] = useState("");
+  const [openForm, setForm] = useState(false);
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState<string>("");
@@ -135,6 +137,16 @@ export default function CreateCustomer() {
       });
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!emailRegex.test(email)) {
+  toast({
+    title: "Email không hợp lệ",
+    description: "Vui lòng nhập một địa chỉ email hợp lệ.",
+    variant: "destructive",
+  });
+  return;
+}
     if (!phone) {
       toast({
         title: "Thiếu số điện thoại khách hàng",
@@ -187,18 +199,21 @@ export default function CreateCustomer() {
     };
     console.log(Data);
     try {
+      setIsLoadingCreate(true);
       const response = await createAccount(Data);
       if (response.data) {
         toast({
           title: "Đăng ký thành công",
           style: { backgroundColor: "#73EC8B", color: "#ffffff" },
         });
+        setForm(false);
       } else if (response.error) {
         toast({
           title: response.error,
           description: "Vui lòng thử lại",
           variant: "destructive",
         });
+        setIsLoadingCreate(false);
       }
     } catch (error) {
       toast({
@@ -206,7 +221,9 @@ export default function CreateCustomer() {
         description: "Đăng ký thất bại vui lòng thử lại",
         variant: "destructive",
       });
+      setIsLoadingCreate(false);
     } finally {
+      setIsLoadingCreate(false);
     }
   };
   return (
@@ -214,7 +231,7 @@ export default function CreateCustomer() {
       <HoverCard openDelay={100} closeDelay={200}>
         <HoverCardTrigger>
           {" "}
-          <Dialog>
+          <Dialog open={openForm} onOpenChange={setForm}>
             <DialogTrigger asChild>
               <FaPlus size={22} />
             </DialogTrigger>
@@ -423,12 +440,19 @@ export default function CreateCustomer() {
                   onChange={(e) => setAddress(e.target.value)}
                 />
               </div>
-              <Button
-                onClick={handleCreateClick}
-                className="py-7 w-52 mx-auto text-2xl bg-blue-500 hover:bg-blue-600"
-              >
-                Tạo tài khoản
-              </Button>
+              {isLoadingCreate ? (
+                <Button className="py-7 w-52 mx-auto text-2xl" disabled>
+                  <Loader2 className="animate-spin" />
+                  Đang xử lý
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCreateClick}
+                  className="py-7 w-52 mx-auto text-2xl bg-blue-500 hover:bg-blue-600"
+                >
+                  Tạo tài khoản
+                </Button>
+              )}
             </DialogContent>
           </Dialog>
         </HoverCardTrigger>

@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -65,6 +66,7 @@ export default function CreateShipper() {
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
   const [openForm, setForm] = useState(false);
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
@@ -154,6 +156,16 @@ export default function CreateShipper() {
       });
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Email không hợp lệ",
+        description: "Vui lòng nhập một địa chỉ email hợp lệ.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!phone) {
       toast({
         title: "Thiếu số điện thoại khách hàng",
@@ -207,8 +219,9 @@ export default function CreateShipper() {
       username: usename,
       password: password,
     };
-    console.log(Data);
+
     try {
+      setIsLoadingCreate(true);
       const response = await createShipper(Data);
       if (response.data) {
         toast({
@@ -222,6 +235,7 @@ export default function CreateShipper() {
           description: "Vui lòng thử lại",
           variant: "destructive",
         });
+        setIsLoadingCreate(false);
       }
     } catch (error) {
       toast({
@@ -229,7 +243,9 @@ export default function CreateShipper() {
         description: "Đăng ký thất bại vui lòng thử lại",
         variant: "destructive",
       });
+      setIsLoadingCreate(false);
     } finally {
+      setIsLoadingCreate(false);
     }
   };
   return (
@@ -492,12 +508,19 @@ export default function CreateShipper() {
                   onChange={(e) => setAddress(e.target.value)}
                 />
               </div>
-              <Button
-                onClick={handleCreateClick}
-                className="py-7 w-52 mx-auto text-2xl bg-blue-500 hover:bg-blue-600"
-              >
-                Tạo tài khoản
-              </Button>
+              {isLoadingCreate ? (
+                <Button className="py-7 w-52 mx-auto text-2xl" disabled>
+                  <Loader2 className="animate-spin" />
+                  Đang xử lý
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCreateClick}
+                  className="py-7 w-52 mx-auto text-2xl bg-blue-500 hover:bg-blue-600"
+                >
+                  Tạo tài khoản
+                </Button>
+              )}
             </DialogContent>
           </Dialog>
         </HoverCardTrigger>

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { jwtDecode } from "jwt-decode";
 // import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
@@ -58,26 +59,26 @@ export default function LoginPage() {
       });
 
       if (!res?.error) {
-        // const session = await getSession(); // Lấy session hiện tại
-        // const token = session?.user?.accessToken;
-        // let userRole = "";
-        // if (token) {
-        //   try {
-        //     const decodedToken = jwtDecode<any>(token);
-        //     userRole =
-        //       decodedToken[
-        //         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        //       ] || "No role found";
-        //   } catch (error) {
-        //     console.error("Error decoding token:", error);
-        //   }
-        // }
-        // if (userRole === "Shipper_Store") {
-        //   handleNavigation("/order-tracking");
-        // } else {
-        //   handleNavigation("/");
-        // }
-        router.push("/home");
+        const session = await getSession(); // Lấy session hiện tại
+        const token = session?.user?.accessToken;
+        let userRole = "";
+        if (token) {
+          try {
+            const decodedToken = jwtDecode<any>(token);
+            userRole =
+              decodedToken[
+                "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+              ] || "No role found";
+          } catch (error) {
+            console.error("Error decoding token:", error);
+          }
+        }
+        if (userRole === "Shipper_Store") {
+          router.push("/shipper");
+        } else {
+          router.push("/home");
+        }
+        // router.push("/home");
         toast({
           title: "Đăng nhập thành công",
           description: "Bạn đã đăng nhập thành công!",
