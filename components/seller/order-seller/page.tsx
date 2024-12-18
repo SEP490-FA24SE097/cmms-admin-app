@@ -943,10 +943,10 @@ export default function OrderSellerPage() {
                   value={selectedShipper.id}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Cửa hàng">
+                    <SelectValue placeholder="Nhân viên">
                       {shippers?.data === null
                         ? "Đang tải..."
-                        : selectedShipper.fullName || "Chọn cửa hàng"}
+                        : selectedShipper.fullName || "Chọn nhân viên"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
