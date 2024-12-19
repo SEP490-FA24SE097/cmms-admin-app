@@ -262,6 +262,9 @@ export default function HeaderSeler() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => router.push("/order-pending")}>
+                Quản lý đơn chờ
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut()}>
                 Đăng xuất
               </DropdownMenuItem>

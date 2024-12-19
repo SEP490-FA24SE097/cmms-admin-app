@@ -518,7 +518,8 @@ export default function ListRequestStore() {
                     {formatDateTime(item.lastUpdateTime)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.status === "Confirmed" ? (
+                    {item.status === "Confirmed" ||
+                    item.status === "Canceled" ? (
                       ""
                     ) : (
                       <AlertDialog open={open1} onOpenChange={setOpen1}>

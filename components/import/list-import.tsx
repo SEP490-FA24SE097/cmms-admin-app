@@ -248,6 +248,7 @@ export default function ImportList() {
               <Accordion type="single" collapsible key={item.id}>
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
+                    showIcon={false}
                     className={`grid grid-cols-8 grid-rows-1  gap-4 p-3 ${
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}

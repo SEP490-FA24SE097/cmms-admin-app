@@ -85,10 +85,12 @@ export default function NavHeader() {
                     onMouseEnter={() => handleMouseEnter("transaction")}
                     onMouseLeave={() => handleMouseLeave("transaction")}
                   >
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaBoxArchive className="mr-2 size-4" />
-                      Danh mục
-                    </div>
+                    <Link href="/store-request">
+                      <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                        <FaBoxArchive className="mr-2 size-4" />
+                        Gửi yêu cầu
+                      </div>
+                    </Link>
                     <Link href="/import">
                       <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                         <FaBoxArchive className="mr-2 size-4" />

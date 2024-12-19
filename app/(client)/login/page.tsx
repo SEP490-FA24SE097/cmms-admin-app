@@ -77,10 +77,7 @@ export default function LoginPage() {
         if (userRole === "Senior_Management") {
           router.push("/manage/dashboard");
         }
-        if (userRole === "Store_Manager") {
-          router.push("/store-request");
-        }
-        if (userRole === "Sale_Staff") {
+        if (userRole === "Sale_Staff" || userRole === "Store_Manager") {
           router.push("/home");
         }
         if (userRole === "Shipper_Store") {
