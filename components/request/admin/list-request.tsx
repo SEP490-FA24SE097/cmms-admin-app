@@ -15,7 +15,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -58,12 +60,14 @@ import { useGetRequestStore } from "@/lib/actions/request/query-action/request-q
 import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CancelRequest,
-  CreateRequest,
+  SubmitRequest,
 } from "@/lib/actions/request/action/request-action";
-
+import { useQueryClient } from "@tanstack/react-query";
+import { IRequest } from "@/lib/actions/request/type/request";
+import { useGetStore } from "@/lib/actions/store/react-query/store-query";
 export default function ListRequestAdmin() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
@@ -125,14 +129,6 @@ export default function ListRequestAdmin() {
   const [quantity, setQuantity] = useState<number>(1);
 
   // Handler to update quantity, ensuring it's non-negative
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 0) {
-      setQuantity(value);
-    } else if (e.target.value === "") {
-      setQuantity(0); // Allow resetting to 0 if the input is cleared
-    }
-  };
 
   useEffect(() => {
     setSearchParams((prev) => ({
@@ -141,14 +137,14 @@ export default function ListRequestAdmin() {
     }));
   }, [currentPage]);
 
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    null
+  const [selectedRequest, setSelectedRequest] = useState<IRequest | null>(null);
+  const { data: stores, isLoading: isLoadingStore } = useGetStore();
+  const filteredStores = stores?.data?.filter(
+    (store) => store.id !== selectedRequest?.storeId
   );
-
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: request, isLoading: isLoadingRequest } =
     useGetRequestStore(searchParams);
-  console.log(request);
   const totalPages = request?.totalPages || 1;
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -159,9 +155,20 @@ export default function ListRequestAdmin() {
   const [isLoadingCreate1, setIsLoadingCreate1] = useState(false);
   const [open, setOpen] = useState(false);
   const [open1, setOpen1] = useState(false);
-
-  const handleCancel = async (requestId: string | null | undefined) => {
-    if (!requestId) {
+  const [selectedStore, setSelectedStore] = useState({ id: "", name: "" });
+  const handleSelectRequest = (request: IRequest) => {
+    setSelectedRequest(request);
+  };
+  const [where, setWhere] = useState("kho");
+  const handleValueChangeWhre = (value: string) => {
+    setWhere(value);
+  };
+  const handleStoreChange = (value: any) => {
+    const selectedStoreObject = stores?.data.find((item) => item.id === value);
+    setSelectedStore(selectedStoreObject || { id: "", name: "" }); // Handle potential missing store
+  };
+  const handleCancel = async () => {
+    if (!selectedRequest) {
       toast({
         title: "Lỗi",
         description: "Không tìm thấy mã yêu cầu. Vui lòng thử lại.",
@@ -170,13 +177,15 @@ export default function ListRequestAdmin() {
       return;
     }
 
-    const data = { requestId };
-
-    console.log(data);
+    const data = {
+      fromStoreId: selectedRequest.storeId,
+      requestId: selectedRequest.id,
+      isApproved: false,
+    };
 
     try {
       setIsLoadingCreate1(true);
-      const response = await CancelRequest(data);
+      const response = await SubmitRequest(data);
       if (response.success) {
         toast({
           title: "Đã xóa thành công.",
@@ -186,6 +195,9 @@ export default function ListRequestAdmin() {
           },
         });
         setOpen1(false);
+        queryClient.invalidateQueries({
+          queryKey: ["Request_STORE_LIST", searchParams],
+        });
       } else {
         toast({
           title: "Lỗi",
@@ -205,7 +217,61 @@ export default function ListRequestAdmin() {
       setIsLoadingCreate1(false);
     }
   };
-
+  const handleSubmit = async () => {
+    if (!selectedRequest) {
+      setIsLoadingCreate(true);
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy mã yêu cầu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (where === "kho") {
+      setSelectedStore({
+        id: "",
+        name: "",
+      });
+    }
+    const data = {
+      fromStoreId: selectedStore.id || null,
+      requestId: selectedRequest.id,
+      isApproved: true,
+    };
+    console.log(data);
+    try {
+      const response = await SubmitRequest(data);
+      if (response.success) {
+        toast({
+          title: "Cập nhật thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+        setOpen(false);
+        queryClient.invalidateQueries({
+          queryKey: ["Request_STORE_LIST", searchParams],
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description:
+            response.error || "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCreate(false);
+    }
+  };
   return (
     <div className="w-[80%] mx-auto mt-5">
       <div className="flex gap-4">
@@ -317,16 +383,97 @@ export default function ListRequestAdmin() {
                     {formatDateTime(item.lastUpdateTime)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.status === "Confirmed" ? (
+                    {item.status !== "Processing" ? (
                       ""
                     ) : (
                       <div className="flex gap-2">
-                        <Button className="bg-green-500 text-white hover:bg-green-600">
-                          Chấp nhận
-                        </Button>
+                        <AlertDialog open={open} onOpenChange={setOpen}>
+                          <AlertDialogTrigger>
+                            <Button
+                              onClick={() => handleSelectRequest(item)}
+                              className="bg-green-500 text-white hover:bg-green-600"
+                            >
+                              Chấp nhận
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                <div className="space-y-5">
+                                  <div className="flex justify-between items-center gap-5">
+                                    <h1>Nhập hàng cho: </h1>
+                                    <Select
+                                      onValueChange={handleValueChangeWhre}
+                                      value={where}
+                                    >
+                                      <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Nhập tại" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          <SelectItem value="kho">
+                                            Kho tổng
+                                          </SelectItem>
+                                          <SelectItem value="store">
+                                            Cửa hàng
+                                          </SelectItem>
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {where === "store" && (
+                                    <div className="flex justify-between items-center gap-5">
+                                      <h1>Cửa hàng: </h1>
+                                      <Select
+                                        onValueChange={handleStoreChange}
+                                        value={selectedStore.id}
+                                      >
+                                        <SelectTrigger className="w-[180px]">
+                                          <SelectValue placeholder="Cửa hàng">
+                                            {filteredStores === null
+                                              ? "Đang tải..."
+                                              : selectedStore.name ||
+                                                "Chọn cửa hàng"}
+                                          </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectGroup>
+                                            {filteredStores?.map((item) => (
+                                              <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                              >
+                                                {item.name}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectGroup>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  )}
+                                </div>
+                              </AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleSubmit()}
+                                className="bg-blue-500"
+                              >
+                                Cập nhật
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
                         <AlertDialog open={open1} onOpenChange={setOpen1}>
                           <AlertDialogTrigger>
-                            <Button variant="destructive">Hủy</Button>
+                            <Button
+                              onClick={() => handleSelectRequest(item)}
+                              variant="destructive"
+                            >
+                              Hủy
+                            </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -337,7 +484,7 @@ export default function ListRequestAdmin() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Hủy</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleCancel(item.id)}
+                                onClick={() => handleCancel()}
                                 className="bg-red-500"
                               >
                                 Xóa

@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useInvoiceContext } from "@/context/invoice-context";
+import { Invoice, useInvoiceContext } from "@/context/invoice-context";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
@@ -55,6 +55,7 @@ export default function OrderSellerPage() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const [discount, setDiscount] = useState(0);
   const [customerPaid, setCustomerPaid] = useState(0);
+
   const [selectedShipper, setSelectedShipper] = useState({
     id: "",
     fullName: "",
@@ -95,11 +96,6 @@ export default function OrderSellerPage() {
     hour12: false,
   });
 
-  interface Invoice {
-    id: string; // Unique identifier for the invoice
-    name: string; // Name of the invoice
-    materials: Material[]; // List of selected materials for this invoice
-  }
   type Location = {
     value: string;
     label: string;
@@ -166,8 +162,8 @@ export default function OrderSellerPage() {
   const calculateTotals = (invoice: Invoice) => {
     const totals = invoice?.materials.reduce(
       (acc, material) => {
-        acc.totalQuantity += material.quantity;
-        acc.totalPrice += material.materialPrice * material.quantity;
+        acc.totalQuantity += material.number;
+        acc.totalPrice += material.materialPrice * material.number;
         return acc;
       },
       { totalQuantity: 0, totalPrice: 0 } // Initial values
@@ -327,7 +323,7 @@ export default function OrderSellerPage() {
   }, [selectedDistrict]);
   const storeItem = activeInvoice?.materials.map((item, index) => ({
     materialId: item.materialId, // Assuming each item in materials represents a materialId
-    quantity: item.quantity,
+    quantity: item.number,
     variantId: item.variantId, // Replace '1' with the desired logic to calculate quantity
   }));
   const handlePaymentClick = async () => {
@@ -468,7 +464,7 @@ export default function OrderSellerPage() {
                       {/* Hiển thị số lượng */}
                       <input
                         type="text"
-                        value={item.quantity}
+                        value={item.number}
                         onChange={(e) =>
                           handleQuantityChange(item.id, e.target.value)
                         }
@@ -509,7 +505,7 @@ export default function OrderSellerPage() {
                         })}
                       </div>
                       <div className="font-bold">
-                        {(item.materialPrice * item.quantity).toLocaleString(
+                        {(item.materialPrice * item.number).toLocaleString(
                           "vi-VN",
                           {
                             style: "currency",

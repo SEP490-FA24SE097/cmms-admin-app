@@ -12,15 +12,13 @@ import {
   fetchListData,
 } from "@/lib/api/api-handler/generic";
 import { IUnit } from "../type/unit";
+import { axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
-export async function getUnit(
-): Promise<ApiListResponse<IUnit>> {
+export async function getUnit(): Promise<ApiListResponse<IUnit>> {
   noStore();
 
-  const result = await fetchListData<IUnit>(
-    "/units"
-  );
+  const result = await fetchListData<IUnit>("/units");
 
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
@@ -28,3 +26,14 @@ export async function getUnit(
   return result.data;
 }
 
+export async function CreateUnit(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() => axiosAuth.post("/units", data));
+
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}

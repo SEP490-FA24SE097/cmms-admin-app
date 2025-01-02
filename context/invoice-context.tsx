@@ -10,16 +10,17 @@ interface Material {
   variantName: string | null;
   variantImage: string | null;
   quantity: number;
+  number: number;
   materialPrice: number;
   variantPrice: number;
   attributes: IAttributes[];
   lastUpdateTime: string;
 }
-interface IAttributes{
+interface IAttributes {
   name: string;
   value: string;
 }
-interface Invoice {
+export interface Invoice {
   id: string; // Unique identifier for the invoice
   name: string; // Name of the invoice
   materials: Material[]; // List of selected materials for this invoice
@@ -93,14 +94,14 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
           const updatedMaterials = [...invoice.materials];
           updatedMaterials[existingMaterialIndex] = {
             ...updatedMaterials[existingMaterialIndex],
-            quantity: updatedMaterials[existingMaterialIndex].quantity + 1,
+            number: updatedMaterials[existingMaterialIndex].number + 1,
           };
           return { ...invoice, materials: updatedMaterials };
         }
 
         return {
           ...invoice,
-          materials: [{ ...material, quantity: 1 }, ...invoice.materials],
+          materials: [{ ...material, number: 1 }, ...invoice.materials],
         };
       })
     );
@@ -109,6 +110,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
   // Change material quantity
   const handleQuantityChange = (id: string, value: string) => {
     const parsedValue = parseInt(value, 10);
+
     if (!isNaN(parsedValue) && parsedValue >= 1) {
       setInvoices((prev) =>
         prev.map((invoice, index) =>
@@ -116,7 +118,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? {
                 ...invoice,
                 materials: invoice.materials.map((item) =>
-                  item.id === id ? { ...item, quantity: parsedValue } : item
+                  item.id === id ? { ...item, number: parsedValue } : item
                 ),
               }
             : invoice
@@ -136,9 +138,9 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
                 item.id === id
                   ? {
                       ...item,
-                      quantity: increment
-                        ? item.quantity + 1
-                        : Math.max(item.quantity - 1, 1),
+                      number: increment
+                        ? item.number + 1
+                        : Math.max(item.number - 1, 1),
                     }
                   : item
               ),

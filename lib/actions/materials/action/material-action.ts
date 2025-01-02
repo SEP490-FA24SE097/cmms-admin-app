@@ -47,7 +47,7 @@ export async function getMaterialsWarehouse(
   noStore();
 
   const result = await fetchListDataWithPagi<IMaterialWarehouse>(
-    "/warehouse/get-warehouse-products?",
+    "/warehouse/get-warehouse-products",
     searchParams
   );
 
@@ -85,4 +85,16 @@ export async function getMaterialById(
   }
 
   return result.data;
+}
+
+export async function CreateMaterial(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() => axiosAuth.post("/materials", data));
+  console.log(result);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
 }

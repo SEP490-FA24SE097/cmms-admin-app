@@ -54,6 +54,22 @@ export async function CancelRequest(data: any): Promise<Result<void>> {
       data
     )
   );
+
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+export async function SubmitRequest(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post(
+      "/store-material-import-requests/approve-or-cancel-store-material-import-request",
+      data
+    )
+  );
   console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };

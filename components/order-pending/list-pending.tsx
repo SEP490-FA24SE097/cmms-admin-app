@@ -60,11 +60,14 @@ import { IInvoices } from "@/lib/actions/invoices/type/invoice-type";
 import { useGetShipper } from "@/lib/actions/shipper/react-query/shipper-query";
 import { useToast } from "@/hooks/use-toast";
 import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
-
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 export default function OrderPending() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoices | null>(
     null
   );
@@ -199,10 +202,9 @@ export default function OrderPending() {
         });
         setPhone("");
         setIsLoadingPayment(false);
-        // // Redirect to the home page after a short delay
-        // setTimeout(() => {
-        //   window.location.href = "/home";
-        // }, 2000);
+        queryClient.invalidateQueries({
+          queryKey: ["INVOICE_PENDING_LIST", searchParams],
+        });
       } else {
         // Handle cases where the response indicates failure
         toast({
@@ -323,6 +325,7 @@ export default function OrderPending() {
               <Accordion type="single" collapsible key={item.id}>
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
+                    showIcon={false}
                     className={`grid grid-cols-4 grid-rows-1  gap-4 p-3 ${
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}
@@ -577,7 +580,7 @@ export default function OrderPending() {
                                           onClick={handlePaymentClick}
                                           className="text-2xl font-bold w-full py-10 bg-blue-500 text-white hover:bg-blue-700"
                                         >
-                                          Thanh toán
+                                          Xử lý
                                         </Button>
                                       )}
                                     </div>

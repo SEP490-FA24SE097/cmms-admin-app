@@ -61,9 +61,10 @@ import {
   CancelRequest,
   CreateRequest,
 } from "@/lib/actions/request/action/request-action";
-
+import { useQueryClient } from "@tanstack/react-query";
 export default function ListRequestStore() {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
@@ -152,7 +153,6 @@ export default function ListRequestStore() {
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: request, isLoading: isLoadingRequest } =
     useGetRequestStore(searchParams);
-  console.log(request);
   const totalPages = request?.totalPages || 1;
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -194,6 +194,9 @@ export default function ListRequestStore() {
         });
         setIsLoadingCreate(false);
         setOpen(false);
+        queryClient.invalidateQueries({
+          queryKey: ["Request_STORE_LIST", searchParams],
+        });
       } else {
         toast({
           title: "Lỗi",
@@ -236,6 +239,9 @@ export default function ListRequestStore() {
           },
         });
         setOpen1(false);
+        queryClient.invalidateQueries({
+          queryKey: ["Request_STORE_LIST", searchParams],
+        });
       } else {
         toast({
           title: "Lỗi",
