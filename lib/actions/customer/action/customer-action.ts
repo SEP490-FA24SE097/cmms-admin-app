@@ -11,7 +11,7 @@ import {
   fetchSingleData,
   fetchListData,
 } from "@/lib/api/api-handler/generic";
-import { ICustomer } from "../type/customer";
+import {  Data, ICustomer, ITransaction } from "../type/customer";
 import { api, axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
@@ -27,6 +27,20 @@ export async function getCustomers(
 
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
+  }
+
+  return result.data;
+}
+
+export async function getAllCustomer(
+  searchParams: any
+): Promise<ApiSingleResponse<Data>> {
+  const result = await fetchSingleData<Data>(
+    `/customers?${new URLSearchParams(searchParams)}`
+  );
+
+  if (!result.success) {
+    return { data: null, error: result.error };
   }
 
   return result.data;
@@ -49,12 +63,13 @@ export async function createAccount<T>(data: any): Promise<ApiListResponse<T>> {
   };
 }
 
-
 export async function createShipper<T>(data: any): Promise<ApiListResponse<T>> {
   noStore();
-  console.log(data);
-  const result = await apiRequest(() => axiosAuth.post("/shippingDetails/add-shipper", data));
-  console.log(result);
+
+  const result = await apiRequest(() =>
+    axiosAuth.post("/shippingDetails/add-shipper", data)
+  );
+
   if (!result.success) {
     return { data: [], error: result.error };
   }
@@ -65,4 +80,22 @@ export async function createShipper<T>(data: any): Promise<ApiListResponse<T>> {
     pageCount: result.data.pagination?.perPage ?? 0,
     totalPages: result.data.pagination?.total ?? 0,
   };
+}
+
+
+export async function getCustomerTransaction(
+  searchParams: Record<string, string | number | boolean>
+): Promise<ApiListResponse<ITransaction>> {
+  noStore();
+
+  const result = await fetchListDataWithPagi<ITransaction>(
+    "/transactions",
+    searchParams
+  );
+
+  if (!result.success) {
+    return { data: [], pageCount: 0, error: result.error };
+  }
+
+  return result.data;
 }

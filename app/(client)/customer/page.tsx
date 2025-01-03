@@ -1,5 +1,6 @@
 "use client";
-import ImportList from "@/components/import/list-import";
+
+import CustomerList from "@/components/customer/list-customer";
 import ManagerHeader from "@/components/manager/header/page";
 import NavHeader from "@/components/manager/nav-header/page";
 import { useSession } from "next-auth/react";
@@ -21,7 +22,7 @@ export default function ImportPage() {
     <div className="bg-slate-200 min-h-screen pb-5">
       <ManagerHeader />
       <NavHeader />
-      <ImportList />
+      <CustomerList />
     </div>
   );
 }

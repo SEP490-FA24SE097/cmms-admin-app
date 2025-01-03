@@ -42,9 +42,15 @@ import {
 
 import { CalendarIcon } from "lucide-react";
 import { useGetSuplier } from "@/lib/actions/supplier/react-query/supplier-query";
-import { useGetImport } from "@/lib/actions/import/react-quert/import-query";
+import { RxUpdate } from "react-icons/rx";
+import { FaLock } from "react-icons/fa";
+import { IoTrashBin } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { useGetAllCustomer } from "@/lib/actions/customer/react-query/customer-query";
+import CustomerDept from "./customer-dept";
 
 export default function CustomerList() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
@@ -83,15 +89,13 @@ export default function CustomerList() {
     return `${formattedDate} ${formattedTime}`;
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const [searchParams, setSearchParams] = useState({
-    page: currentPage,
-    itemPerPage: 10,
-    isDateDescending: true,
-    supplierId: selectedSupplier.id,
+    "defaultSearch.currentPage": currentPage,
+    "defaultSearch.perPage": 10,
   });
-  console.log(currentPage);
+
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
@@ -101,18 +105,21 @@ export default function CustomerList() {
   }, [selectedSupplier.id, currentPage]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
-  const { data: imports, isLoading: isLoadingImport } =
-    useGetImport(searchParams);
-  const totalPages = imports?.totalPages || 1;
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const { data: customers, isLoading: isLoadingCustomer } =
+    useGetAllCustomer(searchParams);
+  const currentDebtTotal = customers?.data?.currentDebtTotal || null;
+  //     const totalItems = customers?.data?.pagination.total || 0;
+  //     const itemsPerPage = customers?.data?.pagination.perPage || 1;
+  //     const totalPages = Math.ceil(totalItems / itemsPerPage);
+  //   const handlePageChange = (page: number) => {
+  //     if (page >= 1 && page <= totalPages) {
+  //       setCurrentPage(page);
+  //     }
+  //   };
   return (
-    <div className="w-[80%] mx-auto mt-5">
+    <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
-        <div className="text-2xl font-bold">Phiếu nhập hàng</div>
+        <div className="text-2xl font-bold">Khách hàng</div>
         <div className="col-span-4">
           <div className="flex justify-between">
             <div className="relative w-[40%]">
@@ -237,172 +244,153 @@ export default function CustomerList() {
         </div>
         <div className="col-span-4 ">
           <div className="border h-auto">
-            <div className="grid grid-cols-8 grid-rows-1 gap-4 bg-blue-100 p-3 font-bold">
-              <div>Mã nhập hàng</div>
-              <div>Thời gian</div>
-              <div className="col-span-4">Nhà cung cấp</div>
-              <div className="col-start-7">Cần trả NCC</div>
-              <div className="col-start-8">Trạng thái</div>
+            <div className="grid grid-cols-6 grid-rows-1 gap-4 bg-blue-100 p-3 font-bold">
+              <div>Mã Khách hàng</div>
+              <div>Tên khách hàng</div>
+              <div className="text-center">Số điện thoai</div>
+              <div className="text-center">Nợ hiện tại</div>
+              <div className="text-right">Tổng bán</div>
+              <div className="text-right">Tổng bán trừ trả hàng</div>
             </div>
-            {imports?.data.map((item, index) => (
+            <div className="grid grid-cols-6 grid-rows-1 gap-4 bg-yellow-50 p-3 font-bold">
+              <div></div>
+              <div></div>
+              <div className="text-center"></div>
+              <div className="text-center">
+                {customers?.data?.currentDebtTotal.toLocaleString("vi-VN")}
+              </div>
+              <div className="text-right">
+                {customers?.data?.totalSale.toLocaleString("vi-VN")}
+              </div>
+              <div className="text-right">
+                {customers?.data?.totalSaleAfterRefund.toLocaleString("vi-VN")}
+              </div>
+            </div>
+            {customers?.data?.result.map((item, index) => (
               <Accordion type="single" collapsible key={item.id}>
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
                     showIcon={false}
-                    className={`grid grid-cols-8 grid-rows-1  gap-4 p-3 ${
+                    className={`grid grid-cols-6 grid-rows-1 gap-4 p-3 ${
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}
                   >
-                    <div>{item.importCode}</div>
-                    <div>{formatDateTime(item.timeStamp)}</div>
+                    <div>{item.id}</div>
+                    <div>{item.fullName}</div>
 
-                    <div className="col-span-4 capitalize">
-                      {item.supplierName}
+                    <div className="text-center">{item.phoneNumber}</div>
+                    <div className="text-center">
+                      {item.currentDebt.toLocaleString("vi-VN")}
                     </div>
-                    <div className="col-start-7">
-                      {item.totalDue.toLocaleString("vi-VN")}
+                    <div className="text-right">
+                      {item.totalSale.toLocaleString("vi-VN")}
                     </div>
-                    <div className="col-start-8 capitalize">{item.status}</div>
+                    <div className="text-right">
+                      {item.totalSaleAfterRefund.toLocaleString("vi-VN")}
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-0">
                     <div className="p-5 border bg-white">
-                      <h1 className="font-bold text-xl">Thông tin chi tiết</h1>
-                      <div className="grid grid-cols-3 grid-rows-1 gap-4 mt-5">
-                        <div className="col-span-2 space-y-3">
-                          <div className="flex gap-10 items-center">
-                            <div className="flex-1 flex gap-5 border-b p-2">
-                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                <div>Mã nhập hàng:</div>
-                                <div className="font-bold">
-                                  {item.importCode}
-                                </div>
-                              </div>
+                      <Tabs defaultValue="info" className="w-full">
+                        <TabsList>
+                          <TabsTrigger value="info">
+                            Thông tin chi tiết
+                          </TabsTrigger>
+                          <TabsTrigger value="dept">
+                            Nợ cần thu từ khách hàng
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent className="py-2 space-y-5" value="info">
+                          <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Mã khách hàng:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.id}
+                              </h1>
                             </div>
-                            <div className="flex-1 flex gap-5 border-b p-2">
-                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                <div>Nhà cung cấp:</div>
-                                <div className="capitalize">
-                                  {item.supplierName}
-                                </div>
-                              </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Tên khách hàng:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.fullName}
+                              </h1>
                             </div>
-                          </div>
-                          <div className="flex gap-10 items-center">
-                            <div className="flex-1 flex gap-5 border-b p-2">
-                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                <div>Trạng thái:</div>
-                                <div>{item.status}</div>
-                              </div>
-                            </div>
-                            <div className="flex-1 flex gap-5 border-b p-2">
-                              <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                <div>Thời gian:</div>
-                                <div className="">
-                                  {formatDateTime(item.timeStamp)}
-                                </div>
-                              </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Số điện thoại:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.phoneNumber || "Chưa có"}
+                              </h1>
                             </div>
                           </div>
-                          <div className="flex gap-10 items-center">
-                            <div className="w-full flex gap-5 border-b p-2">
-                              <div>Tên cửa hàng:</div>
-                              <div className="">
-                                {item.storeName ? item.storeName : "Kho tổng"}
-                              </div>
+                          <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Email:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.email}
+                              </h1>
+                            </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Mã số thuế:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.taxCode || "Chưa có"}
+                              </h1>
+                            </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Trạng thái:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.customerStatus}
+                              </h1>
                             </div>
                           </div>
-                          <div className="flex gap-10 items-center">
-                            <div className="flex w-full gap-5 border-b p-2">
-                              <div>Ghi chú:</div>
-                              <div>{item.note}</div>
+                          <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Ngày sinh:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.dob}
+                              </h1>
+                            </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Tạo bởi:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.createByName}
+                              </h1>
+                            </div>
+                            <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                              <h1 className="col-span-2">Nhóm KH:</h1>
+                              <h1 className="col-span-3 col-start-3 font-bold">
+                                {item.customerType}
+                              </h1>
                             </div>
                           </div>
-                        </div>
-                        <div className="col-start-3 pr-5 space-y-2">
-                          <div className="flex gap-5 justify-end">
-                            <h1>Tổng số lượng:</h1>
-                            <h1>{item.totalQuantity}</h1>
-                          </div>
-                          <div className="flex gap-5 justify-end">
-                            <h1>Tổng số mặt hàng:</h1>
-                            <h1>{item.totalProduct}</h1>
-                          </div>
-                          <div className="flex gap-5 justify-end">
-                            <h1>Tổng tiền hàng:</h1>
-                            <h1>{item.totalPice.toLocaleString("vi-VN")}</h1>
-                          </div>
-                          <div className="flex gap-5 justify-end">
-                            <h1>Giảm giá:</h1>
-                            <h1>
-                              {item.totalDiscount.toLocaleString("vi-VN")}
+                          <div className="flex gap-5 border-b pb-2">
+                            <h1>Địa chỉ:</h1>
+                            <h1 className="font-semibold">
+                              {item.address}, {item.ward}, {item.district},{" "}
+                              {item.province}
                             </h1>
                           </div>
-                          <div className="flex gap-5 justify-end">
-                            <h1 className="font-bold">Tổng cộng:</h1>
-                            <h1 className="font-bold">
-                              {item.totalDue.toLocaleString("vi-VN")}
-                            </h1>
+                          <div className="flex justify-end gap-5">
+                            <Button className="bg-green-500 text-white hover:bg-green-600">
+                              <RxUpdate /> Cập nhật
+                            </Button>
+                            <Button variant="destructive">
+                              <FaLock /> Ngừng hoạt động
+                            </Button>
+                            <Button variant="destructive">
+                              <IoTrashBin /> Xóa
+                            </Button>
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <Table>
-                          <TableHeader className="bg-blue-200 pointer-events-none">
-                            <TableRow>
-                              <TableHead className="w-[100px]">
-                                Mã hàng
-                              </TableHead>
-                              <TableHead className="w-[200px]">
-                                Tên hàng
-                              </TableHead>
-                              <TableHead>Số lượng</TableHead>
-                              <TableHead>Đơn giá</TableHead>
-                              <TableHead>Giảm giá</TableHead>
-                              <TableHead>Giá nhập</TableHead>
-                              <TableHead>Thành tiền</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {item?.importDetails?.map((detail) => (
-                              <TableRow key={detail.materialCode}>
-                                <TableCell className="font-medium">
-                                  {detail.materialCode}
-                                </TableCell>
-                                <TableCell className="w-[200px]">
-                                  {detail.name}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {detail.quantity}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {detail.unitPrice.toLocaleString("vi-VN")}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {detail.unitDiscount.toLocaleString("vi-VN")}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {detail.unitImportPrice.toLocaleString(
-                                    "vi-VN"
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  {detail.priceAfterDiscount.toLocaleString(
-                                    "vi-VN"
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                        </TabsContent>
+                        <TabsContent value="dept">
+                          <CustomerDept customerId={item.id} />
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             ))}
           </div>
-          <div className="mt-5 flex items-center">
+          {/* <div className="mt-5 flex items-center">
             <Pagination className={cn("justify-start w-auto mx-0")}>
               <PaginationContent>
                 <PaginationItem>
@@ -446,8 +434,10 @@ export default function CustomerList() {
               </PaginationContent>
             </Pagination>
 
-            <div className="ml-5">Có {imports?.total} kết quả tìm kiếm</div>
-          </div>
+            <div className="ml-5">
+              Có {customers?.data?.pagination?.total} kết quả tìm kiếm
+            </div>
+          </div> */}
         </div>
       </div>
     </div>
