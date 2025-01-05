@@ -21,7 +21,25 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ITransaction } from "@/lib/actions/customer/type/customer";
-
+const receiptData = {
+  receiptCode: "TTHD000044",
+  staffName: "phuc van phan",
+  dateTime: "31/12/2024 16:44",
+  paymentMethod: "Tiền mặt",
+  customer: "Anh Giang - Kim Mã",
+  createdBy: "phuc van phan",
+  invoices: [
+    {
+      code: "HD000044",
+      time: "31/12/2024 16:43",
+      totalValue: "4,943,200",
+      preCollected: "0",
+      collected: "4,943,200",
+      status: "Đã thanh toán",
+    },
+  ],
+  totalCollected: "4,943,200",
+};
 export default function CustomerDept({ customerId }: any) {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedTransaction, setSelectedTransaction] =
@@ -98,15 +116,102 @@ export default function CustomerDept({ customerId }: any) {
                       <DialogHeader>
                         <DialogTitle>Phiếu thu</DialogTitle>
                         <DialogDescription>
-                          <div className="grid grid-cols-3 grid-rows-1 gap-4 mt-2 text-black">
-                            <div className="grid grid-cols-5 grid-rows-1 gap-4 font-bold">
-                              <div className="col-span-2">Mã phiếu thu:</div>
-                              <div className="col-span-3 col-start-3">
-                                {selectedTransaction?.id}
+                          <div className="grid grid-cols-2 gap-4 mb-4 text-black">
+                            <div>
+                              <p className="font-semibold">Mã phiếu thu:</p>
+                              <p>{item.id}</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">Chi nhánh:</p>
+                              <div className="flex items-center">
+                                <p>{item.invoiceVM.storeName}</p>
                               </div>
                             </div>
-                            <div>2</div>
-                            <div>3</div>
+                            <div>
+                              <p className="font-semibold">Thời gian:</p>
+                              <div className="flex items-center">
+                                <p>
+                                  {formatDateTime(item.invoiceVM.invoiceDate)}
+                                </p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-semibold">Phương thức:</p>
+                              <p>{item.transactionTypeDisplay}</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">Khách hàng:</p>
+                              <p>{item.invoiceVM.userVM.fullName}</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">Địa chỉ:</p>
+                              <p>
+                                {item.invoiceVM.shippingDetailVM?.address ||
+                                  "Chưa xác nhận"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white border border-gray-200">
+                              <thead>
+                                <tr className="bg-gray-100">
+                                  <th className="py-2 px-4 border-b">Ảnh</th>
+                                  <th className="py-2 px-4 border-b">
+                                    Tên sản phẩm
+                                  </th>
+                                  <th className="py-2 px-4 border-b">
+                                    Giá bán
+                                  </th>
+                                  <th className="py-2 px-4 border-b">
+                                    Số lượng
+                                  </th>
+                                  <th className="py-2 px-4 border-b">
+                                    Tổng tiền
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="border max-h-[170px] overflow-hidden overflow-y-auto">
+                                {item.invoiceVM.invoiceDetails.map(
+                                  (invoice, index) => (
+                                    <tr key={index}>
+                                      <td className="py-2 px-4 border-b ">
+                                        <img
+                                          src={invoice.imageUrl || ""}
+                                          className="h-10 w-10 object-cover"
+                                          alt=""
+                                        />
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {invoice.itemName}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {invoice.salePrice.toLocaleString(
+                                          "vi-VN"
+                                        )}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {invoice.quantity}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {invoice.itemTotalPrice.toLocaleString(
+                                          "vi-VN"
+                                        )}
+                                      </td>
+                                    </tr>
+                                  )
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="flex justify-end mt-4">
+                            <p className="font-semibold">
+                              Tổng tiền thu:{" "}
+                              <span className="text-black">
+                                {item.invoiceVM.salePrice.toLocaleString(
+                                  "vi-VN"
+                                )}
+                              </span>
+                            </p>
                           </div>
                         </DialogDescription>
                       </DialogHeader>

@@ -46,9 +46,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   createAccount,
-  createShipper,
+  createAccountStaff,
 } from "@/lib/actions/customer/action/customer-action";
 import { useGetStore } from "@/lib/actions/store/react-query/store-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Location = {
   value: string;
@@ -56,6 +57,7 @@ type Location = {
 };
 export default function CreateShipper() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -218,17 +220,21 @@ export default function CreateShipper() {
       storeId: selectedStore.id,
       username: usename,
       password: password,
+      staffRole: 6,
     };
 
     try {
       setIsLoadingCreate(true);
-      const response = await createShipper(Data);
+      const response = await createAccountStaff(Data);
       if (response.data) {
         toast({
           title: "Đăng ký thành công",
           style: { backgroundColor: "#73EC8B", color: "#ffffff" },
         });
         setForm(false);
+        queryClient.invalidateQueries({
+          queryKey: ["SHIPPER_LIST"],
+        });
       } else if (response.error) {
         toast({
           title: response.error,

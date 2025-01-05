@@ -39,8 +39,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogOverlay,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { useGetSuplier } from "@/lib/actions/supplier/react-query/supplier-query";
 import { RxUpdate } from "react-icons/rx";
 import { FaLock } from "react-icons/fa";
@@ -51,11 +57,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useGetAllCustomer } from "@/lib/actions/customer/react-query/customer-query";
 import CustomerDept from "./customer-dept";
+import UpdateCustomer from "./update-customer";
+import { UpdateStatusCustomer } from "@/lib/actions/customer/action/customer-action";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import CreateCustomer from "../seller/add-customer/page";
 
 export default function CustomerList() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
   const handleSupllierChange = (value: any) => {
     const selectedStoreObject = suppliers?.data.find(
@@ -99,7 +123,7 @@ export default function CustomerList() {
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
-      page: currentPage,
+      "defaultSearch.currentPage": currentPage,
       supplierId: selectedSupplier.id,
     }));
   }, [selectedSupplier.id, currentPage]);
@@ -107,15 +131,90 @@ export default function CustomerList() {
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetAllCustomer(searchParams);
-  const currentDebtTotal = customers?.data?.currentDebtTotal || null;
-  //     const totalItems = customers?.data?.pagination.total || 0;
-  //     const itemsPerPage = customers?.data?.pagination.perPage || 1;
-  //     const totalPages = Math.ceil(totalItems / itemsPerPage);
-  //   const handlePageChange = (page: number) => {
-  //     if (page >= 1 && page <= totalPages) {
-  //       setCurrentPage(page);
-  //     }
-  //   };
+
+  const totalPages = Math.max(
+    0,
+    Math.ceil(
+      (customers?.data?.pagination?.total || 0) /
+        (customers?.data?.pagination?.perPage || 1)
+    )
+  );
+  const handlePageChange = (page: number) => {
+    if (page >= 0 && page <= totalPages - 1) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const result = await UpdateStatusCustomer(id);
+      if (result.success) {
+        toast({
+          title: "Thành công",
+          description: "Đơn vị mới đã được tạo thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["ALL_CUSTOMER"],
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description: result.error || "Có lỗi xảy ra vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi kết nối đến server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const result = await UpdateStatusCustomer(id);
+      if (result.success) {
+        toast({
+          title: "Thành công",
+          description: "Đơn vị mới đã được tạo thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["ALL_CUSTOMER"],
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description: result.error || "Có lỗi xảy ra vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi kết nối đến server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
@@ -151,12 +250,9 @@ export default function CustomerList() {
                 // onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               />
             </div>
-            <div className="">
-              <Link href="/import/create-import">
-                <Button className="bg-blue-500 text-white hover:bg-blue-600">
-                  <FaPlus /> Nhập hàng
-                </Button>
-              </Link>
+
+            <div className="items-center flex">
+              <CreateCustomer isManager={true} />
             </div>
           </div>
         </div>
@@ -369,15 +465,84 @@ export default function CustomerList() {
                             </h1>
                           </div>
                           <div className="flex justify-end gap-5">
-                            <Button className="bg-green-500 text-white hover:bg-green-600">
-                              <RxUpdate /> Cập nhật
-                            </Button>
-                            <Button variant="destructive">
-                              <FaLock /> Ngừng hoạt động
-                            </Button>
-                            <Button variant="destructive">
-                              <IoTrashBin /> Xóa
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button className="bg-green-500 text-white hover:bg-green-600">
+                                  <RxUpdate /> Cập nhật
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-[1000px] h-[420px]">
+                                <DialogOverlay className="bg-white p-5 rounded-lg">
+                                  <UpdateCustomer item={item} />
+                                </DialogOverlay>
+                              </DialogContent>
+                            </Dialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                {item.customerStatus === "Ngừng hoạt động" ? (
+                                  <Button className="bg-green-500 text-white hover:bg-green-600">
+                                    <FaLock /> Mở hoạt động
+                                  </Button>
+                                ) : (
+                                  <Button variant="destructive">
+                                    <FaLock /> Ngừng hoạt động
+                                  </Button>
+                                )}
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Cập nhật trạng thái
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Bạn có chắc muốn cập nhật trạng thái của
+                                    người dùng này không?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                  {isLoading ? (
+                                    <Button className="" disabled>
+                                      <Loader2 className="animate-spin" />
+                                      Đang xử lý
+                                    </Button>
+                                  ) : (
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleUpdateStatus(item.id)
+                                      }
+                                    >
+                                      Cập nhật
+                                    </AlertDialogAction>
+                                  )}
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                  <IoTrashBin /> Xóa
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Are you absolutely sure?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will
+                                    permanently delete your account and remove
+                                    your data from our servers.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TabsContent>
                         <TabsContent value="dept">
@@ -390,27 +555,27 @@ export default function CustomerList() {
               </Accordion>
             ))}
           </div>
-          {/* <div className="mt-5 flex items-center">
+          <div className="mt-5 flex items-center">
             <Pagination className={cn("justify-start w-auto mx-0")}>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() =>
-                      currentPage > 1 && handlePageChange(currentPage - 1)
+                      currentPage > 0 && handlePageChange(currentPage - 1)
                     }
-                    aria-disabled={currentPage === 1}
+                    aria-disabled={currentPage === 0}
                     className={
-                      currentPage === 1
+                      currentPage === 0
                         ? "pointer-events-none opacity-50"
                         : "cursor-pointer"
                     }
                   ></PaginationPrevious>
                 </PaginationItem>
-                {[...Array(totalPages)].map((_, index) => (
+                {[...Array(totalPages || 0)].map((_, index) => (
                   <PaginationItem key={index}>
                     <PaginationLink
-                      isActive={currentPage === index + 1}
-                      onClick={() => handlePageChange(index + 1)}
+                      isActive={currentPage === index}
+                      onClick={() => handlePageChange(index)}
                       className="cursor-pointer"
                     >
                       {index + 1}
@@ -437,7 +602,7 @@ export default function CustomerList() {
             <div className="ml-5">
               Có {customers?.data?.pagination?.total} kết quả tìm kiếm
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

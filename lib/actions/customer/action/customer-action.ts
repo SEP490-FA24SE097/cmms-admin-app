@@ -11,7 +11,7 @@ import {
   fetchSingleData,
   fetchListData,
 } from "@/lib/api/api-handler/generic";
-import {  Data, ICustomer, ITransaction } from "../type/customer";
+import { Data, ICustomer, ITransaction } from "../type/customer";
 import { api, axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
@@ -46,42 +46,71 @@ export async function getAllCustomer(
   return result.data;
 }
 
-export async function createAccount<T>(data: any): Promise<ApiListResponse<T>> {
+export async function createAccount<T>(data: any): Promise<Result<void>> {
   noStore();
-  console.log(data);
   const result = await apiRequest(() => axiosAuth.post("/customers", data));
   console.log(result);
   if (!result.success) {
-    return { data: [], error: result.error };
+    return { success: false, error: result.error };
   }
 
-  // Assuming the result.data contains the expected fields from the API response
-  return {
-    data: result.data.data ? [result.data.data] : [],
-    pageCount: result.data.pagination?.perPage ?? 0,
-    totalPages: result.data.pagination?.total ?? 0,
-  };
+  return { success: true, data: undefined };
 }
 
-export async function createShipper<T>(data: any): Promise<ApiListResponse<T>> {
+export async function createAccountStaff<T>(data: any): Promise<Result<void>> {
   noStore();
 
   const result = await apiRequest(() =>
-    axiosAuth.post("/shippingDetails/add-shipper", data)
+    axiosAuth.post("/store/add-staff", data)
   );
 
   if (!result.success) {
-    return { data: [], error: result.error };
+    return { success: false, error: result.error };
   }
 
-  // Assuming the result.data contains the expected fields from the API response
-  return {
-    data: result.data.data ? [result.data.data] : [],
-    pageCount: result.data.pagination?.perPage ?? 0,
-    totalPages: result.data.pagination?.total ?? 0,
-  };
+  return { success: true, data: undefined };
 }
 
+export async function UpdateCustomerC(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.put("/customers/update-customer", data)
+  );
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+
+export async function UpdateStatusCustomer(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post(`/customers/update-customer-status/${data}`)
+  );
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+export async function DeleteCustomer(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.delete(`/customers/update-customer-status/${data}`)
+  );
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
 
 export async function getCustomerTransaction(
   searchParams: Record<string, string | number | boolean>

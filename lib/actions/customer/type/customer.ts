@@ -64,7 +64,7 @@ export type IInvoiceDetail = {
 
 export type IInvoice = {
   id: string;
-  invoiceDate: string; 
+  invoiceDate: string;
   totalAmount: number;
   invoiceStatus: number;
   note: string | null;
@@ -79,6 +79,19 @@ export type IInvoice = {
   sellPlace: number;
   buyIn: string;
   invoiceDetails: IInvoiceDetail[];
+  shippingDetailVM: IShipping;
+};
+
+export type IShipping = {
+  id: string;
+  address: string;
+  phoneReceive: string;
+  shipperName: string;
+  shippingFee: number;
+  shipperCode: string;
+  note: string | null;
+  shippingDate: string | null;
+  estimatedArrival: string;
 };
 
 export type ITransaction = {

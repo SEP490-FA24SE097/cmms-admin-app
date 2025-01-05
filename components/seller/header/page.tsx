@@ -169,7 +169,7 @@ export default function HeaderSeler() {
               filteredData.map((item, index) => (
                 <li
                   key={index}
-                  onClick={() => handleSelectMaterial(item)}
+                  onClick={() => handleSelectMaterial({ ...item, number: 0 })}
                   className="p-2 rounded-lg hover:bg-blue-100 cursor-pointer"
                 >
                   <div className="max-w-md mx-auto">
