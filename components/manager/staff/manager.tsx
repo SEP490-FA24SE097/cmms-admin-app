@@ -9,6 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+
 import {
   Accordion,
   AccordionContent,
@@ -19,9 +20,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import SaleStaff from "./staff";
 import ShipperStaff from "./shipper";
+
 type ManagerListProps = {
   id: number; // The type of `id` can be adjusted based on your requirements
 };
+
 
 export default function ManagerList({ id }: ManagerListProps) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -48,6 +51,7 @@ export default function ManagerList({ id }: ManagerListProps) {
       setCurrentPage(page);
     }
   };
+  
   return (
     <>
       {isLoadingStaffs ? (
@@ -71,7 +75,7 @@ export default function ManagerList({ id }: ManagerListProps) {
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
                     showIcon={false}
-                    className={`grid grid-cols-6 grid-rows-1 gap-4 p-3 ${
+                    className={`grid grid-cols-6 grid-rows-1 border-b gap-4 p-3 ${
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}
                   >
@@ -90,7 +94,7 @@ export default function ManagerList({ id }: ManagerListProps) {
                   )}
                   {id === 6 && (
                     <AccordionContent className="pb-0">
-                      <ShipperStaff />
+                      <ShipperStaff id={item.id}/>
                     </AccordionContent>
                   )}
                 </AccordionItem>

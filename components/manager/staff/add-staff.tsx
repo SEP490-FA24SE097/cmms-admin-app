@@ -55,11 +55,12 @@ type Location = {
   value: string;
   label: string;
 };
-export default function CreateShipper() {
+export default function AddStaff() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
+  const [staffRole, setStaffRole] = useState("6");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState<string>("");
   const [usename, setUsername] = useState<string>("");
@@ -220,7 +221,7 @@ export default function CreateShipper() {
       storeId: selectedStore.id,
       username: usename,
       password: password,
-      staffRole: 6,
+      staffRole: staffRole,
     };
 
     try {
@@ -233,8 +234,13 @@ export default function CreateShipper() {
         });
         setForm(false);
         queryClient.invalidateQueries({
-          queryKey: ["SHIPPER_LIST"],
+          queryKey: ["Staff_LIST"],
         });
+        setPassword("");
+        setProvinces([]);
+        setDistricts([]);
+        setWards([]);
+        setAddress("");
       } else if (response.error) {
         toast({
           title: response.error,
@@ -254,6 +260,10 @@ export default function CreateShipper() {
       setIsLoadingCreate(false);
     }
   };
+  const handleRoleChange = (value: any) => {
+    setStaffRole(value);
+  };
+  console.log(staffRole);
   return (
     <div>
       <HoverCard openDelay={100} closeDelay={200}>
@@ -261,11 +271,27 @@ export default function CreateShipper() {
           {" "}
           <Dialog open={openForm} onOpenChange={setForm}>
             <DialogTrigger asChild>
-              <FaPlus size={22} />
+              <div>
+                <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                  <FaPlus size={22} /> Thêm nhân viên
+                </Button>
+              </div>
             </DialogTrigger>
             <DialogContent>
-              <h1 className="text-2xl font-bold">Thêm nhân viên vận chuyển</h1>
-              <div className="mt-5 space-y-3">
+              <div className="flex gap-5">
+                <h1 className="text-2xl font-bold">Thêm nhân viên</h1>
+                <Select value={staffRole} onValueChange={handleRoleChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Chọn nhân viên" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">Quản lý</SelectItem>
+                    <SelectItem value="3">Bán hàng</SelectItem>
+                    <SelectItem value="6">Vận chuyển</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-2 space-y-3">
                 <div className="flex items-center ">
                   <h1 className="w-[30%] font-bold">Tên nhân viên:</h1>
                   <Input
@@ -531,7 +557,7 @@ export default function CreateShipper() {
           </Dialog>
         </HoverCardTrigger>
         <HoverCardContent className="p-2 w-full px-5">
-          Thêm nhân viên vận chuyển
+          Thêm nhân viên
         </HoverCardContent>
       </HoverCard>
     </div>

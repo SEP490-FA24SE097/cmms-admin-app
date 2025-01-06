@@ -25,11 +25,13 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import ManagerList from "./manager";
+import AddStaff from "./add-staff";
+import { useRole } from "@/providers/role-context";
 
 export default function StaffList() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
-
+  const { role } = useRole();
   const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
   const handleSupllierChange = (value: any) => {
     const selectedStoreObject = suppliers?.data.find(
@@ -83,11 +85,7 @@ export default function StaffList() {
               />
             </div>
             <div className="">
-              <Link href="/import/create-import">
-                <Button className="bg-blue-500 text-white hover:bg-blue-600">
-                  <FaPlus /> Nhập hàng
-                </Button>
-              </Link>
+              <AddStaff />
             </div>
           </div>
         </div>
@@ -174,9 +172,11 @@ export default function StaffList() {
           </div>
         </div>
         <div className="col-span-4 ">
-          <Tabs defaultValue="manager" className="w-full">
+          <Tabs defaultValue="staff" className="w-full">
             <TabsList>
-              <TabsTrigger value="manager">Quản lý cửa hàng</TabsTrigger>
+              {role === "Senior_Management" && (
+                <TabsTrigger value="manager">Quản lý cửa hàng</TabsTrigger>
+              )}
               <TabsTrigger value="staff">Nhân viên cửa hàng</TabsTrigger>
               <TabsTrigger value="shipper">Nhân viên giao hàng</TabsTrigger>
             </TabsList>
