@@ -313,7 +313,7 @@ export default function ListMaterials() {
                       <div className="grid grid-cols-5 grid-rows-1 gap-4 p-2">
                         <div className="col-span-2">
                           <img
-                            src={item.materialImage}
+                            src={item.variantImage || item.materialImage}
                             className="h-80 w-80 object-cover ml-5"
                             alt=""
                           />
@@ -325,31 +325,30 @@ export default function ListMaterials() {
                                 <span className="font-bold">Mã hàng:</span>{" "}
                                 {item.materialCode}
                               </div>
-                              <div className="mb-2">
-                                <span className="font-bold">Mã vạch:</span>
-                              </div>
+
                               <div className="mb-2">
                                 <span className="font-bold">Nhóm hàng:</span>{" "}
-                                Vật liệu thô
+                                Vat lieu tho
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Loại hàng:</span>{" "}
                                 Hàng hóa
                               </div>
                               <div className="mb-2">
-                                <span className="font-bold">Thương hiệu:</span>
+                                <span className="font-bold">Thương hiệu:</span>{" "}
+                                {item.brand}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Định mức tồn:</span>{" "}
-                                0 ➤ 10
+                                {item.minStock} ➤ {item.maxStock}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Giá bán:</span>{" "}
-                                280,000
+                                {(item.variantCostPrice || item.materialCostPrice).toLocaleString("vi-VN")}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Giá vốn:</span>{" "}
-                                266,000
+                                {(item.variantPrice || item.materialPrice).toLocaleString("vi-VN")}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Trọng lượng:</span>

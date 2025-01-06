@@ -25,7 +25,7 @@ export type IVariants = {
   price: number;
   image: string;
   conversionUnitId: string;
-  conversionUnitName : string;
+  conversionUnitName: string;
   attributes: IAttribute[];
 };
 
@@ -57,8 +57,7 @@ export type IimaterialUnitDtoList = {
   unitId: string;
   conversionRate: number;
   price: number;
-}
-
+};
 
 export type IMaterialWarehouse = {
   id: string;
@@ -66,25 +65,29 @@ export type IMaterialWarehouse = {
   materialCode: string;
   materialName: string;
   materialImage: string;
-  variantName: string;
   variantId: string;
+  variantName: string;
   variantImage: string;
+  brand: string;
+  supplier: string | null; // Assuming supplier can be null
   quantity: number;
   minStock: number;
   maxStock: number;
   materialPrice: number;
-  variantPrice: number;
-  variantCostPrice: number;
   materialCostPrice: number;
+  variantPrice: number;
+  variantCostPrice: number | null;
+  discount: number | null;
+  afterDiscountPrice: number | null;
   lastUpdateTime: string;
   attributes: IMaterialAttributeWarehouse[];
-}
+};
 
 export type IMaterialAttributeWarehouse = {
   name: string;
   value: string;
-}
+};
 
 export type IUnit = {
   name: string;
-}
+};

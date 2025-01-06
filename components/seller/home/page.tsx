@@ -448,7 +448,7 @@ export default function SellerHome() {
           <div className="row-span-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
               {materialData?.data?.map((product, index) => (
-                <HoverCard openDelay={100} closeDelay={100}>
+                <HoverCard key={product.id} openDelay={100} closeDelay={100}>
                   <HoverCardTrigger>
                     {" "}
                     <div
