@@ -59,11 +59,13 @@ import Link from "next/link";
 import { RxUpdate } from "react-icons/rx";
 import { useGetMaterial } from "@/lib/actions/materials/react-query/material-query";
 import UpdateMaterialP from "./popup-update";
+import UpdateVariantP from "./update-variant";
 
 export default function UpdateMaterialC() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openM, setOpenM] = useState(false);
+  const [openV, setOpenV] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
   const handleSupllierChange = (value: any) => {
@@ -386,7 +388,7 @@ export default function UpdateMaterialC() {
                                   </div>
                                 </div>
                                 <div className="flex justify-end gap-5 ">
-                                  <Dialog>
+                                  <Dialog open={openM} onOpenChange={setOpenM}>
                                     <DialogTrigger asChild>
                                       <Button className="bg-green-500 text-white hover:bg-green-600">
                                         <RxUpdate /> Cập nhật
@@ -394,7 +396,10 @@ export default function UpdateMaterialC() {
                                     </DialogTrigger>
                                     <DialogContent className="max-w-[1000px] h-[470px]">
                                       <DialogOverlay className="bg-white p-5 rounded-lg">
-                                        <UpdateMaterialP item={item} />
+                                        <UpdateMaterialP
+                                          item={item}
+                                          setOpenM={setOpenM}
+                                        />
                                       </DialogOverlay>
                                     </DialogContent>
                                   </Dialog>
@@ -455,7 +460,7 @@ export default function UpdateMaterialC() {
                               <div className="grid grid-cols-5 grid-rows-1 gap-4">
                                 <div className="col-span-2">
                                   <img
-                                    src={item.material.imageUrl}
+                                    src={variant.image}
                                     className="h-80 w-80 object-cover"
                                     alt={`${index}`}
                                   />
@@ -538,17 +543,20 @@ export default function UpdateMaterialC() {
                                     </div>
                                   </div>
                                   <div className="flex justify-end gap-5 ">
-                                    <Dialog>
+                                    <Dialog
+                                      open={openV}
+                                      onOpenChange={setOpenV}
+                                    >
                                       <DialogTrigger asChild>
                                         <Button className="bg-green-500 text-white hover:bg-green-600">
                                           <RxUpdate /> Cập nhật
                                         </Button>
                                       </DialogTrigger>
-                                      <DialogContent className="max-w-[1000px] h-[470px]">
+                                      <DialogContent className="max-w-[550px] h-[250px]">
                                         <DialogOverlay className="bg-white p-5 rounded-lg">
-                                          <UpdateMaterialP
-                                            item={item}
-                                            variantId={variant.variantId}
+                                          <UpdateVariantP
+                                            setOpenV={setOpenV}
+                                            item={variant}
                                           />
                                         </DialogOverlay>
                                       </DialogContent>

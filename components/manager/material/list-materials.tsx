@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
+import { RiDiscountPercentLine } from "react-icons/ri";
 import {
   Select,
   SelectContent,
@@ -40,8 +40,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { useGetSuplier } from "@/lib/actions/supplier/react-query/supplier-query";
 import { useGetImport } from "@/lib/actions/import/react-quert/import-query";
 import { cn } from "@/lib/utils";
@@ -49,10 +60,23 @@ import Link from "next/link";
 import { useGetMaterialWarehouse } from "@/lib/actions/materials/react-query/material-query";
 import AddMaterials from "./add-materials";
 import { RxUpdate } from "react-icons/rx";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { CreateDiscount } from "@/lib/actions/materials/action/material-action";
 export default function ListMaterials() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openM, setOpenM] = useState(false);
+  const [discount, setDiscount] = useState<number | undefined>(undefined);
+  const [discountType, setDiscountType] = useState<string>("1");
+  const handleChangeDiscount = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(event.target.value); // Convert input to a number
+    setDiscount(isNaN(value) ? undefined : value); // Handle invalid input gracefully
+  };
+  console.log(discount);
   const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
   const handleSupllierChange = (value: any) => {
     const selectedStoreObject = suppliers?.data.find(
@@ -110,6 +134,66 @@ export default function ListMaterials() {
       setCurrentPage(page);
     }
   };
+  const getFinalDiscount = () => {
+    if (discountType === "2" && discount) {
+      return `${discount}%`; // Append "%" for percentage type
+    }
+    return `${discount}`; // Default to discount as a number for currency type
+  };
+  const [selectMaterialId, setSelectMaterialId] = useState("");
+  // Lưu giá trị trả về từ getFinalDiscount
+  const finalDiscount = getFinalDiscount();
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const handleCreateDiscount = async () => {
+    if (!discount) {
+      toast({
+        title: "Lỗi",
+        description: "Không được để trống.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const data = {
+      materialId: selectMaterialId,
+      discount: finalDiscount,
+    };
+    setLoading(true);
+
+    try {
+      const result = await CreateDiscount(data);
+      if (result.success) {
+        toast({
+          title: "Thành công",
+          description: "Giảm giá đã được tạo thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["MATERIAL_WAREHOUSE_LIST"],
+        });
+        setOpen(false);
+      } else {
+        toast({
+          title: "Lỗi",
+          description: result.error || "Có lỗi xảy ra khi tạo giảm giá.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi kết nối đến server.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
@@ -169,7 +253,7 @@ export default function ListMaterials() {
                   </DialogOverlay>
                 </DialogContent>
               </Dialog>
-              <Link href="materials/update-material">
+              <Link href="/manage/materials/update-material">
                 <Button className="bg-blue-500 text-white hover:bg-blue-600">
                   <RxUpdate /> Cập nhật vật liệu
                 </Button>
@@ -271,11 +355,11 @@ export default function ListMaterials() {
               <div className="col-start-8">Thời gian tạo</div>
             </div>
             {materialsWarehouse?.data.map((item, index) => (
-              <Accordion type="single" collapsible key={item.id}>
+              <Accordion type="single" collapsible key={index}>
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
                     showIcon={false}
-                    className={`grid grid-cols-8 grid-rows-1  gap-4 p-3 ${
+                    className={`grid grid-cols-8 grid-rows-1 gap-4 p-3 ${
                       index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                     }`}
                   >
@@ -292,10 +376,14 @@ export default function ListMaterials() {
                     </div>
 
                     <div className="col-start-4">
-                      {item.materialCostPrice?.toLocaleString("vi-VN")}
+                      {(
+                        item.variantPrice || item.materialPrice
+                      )?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-5">
-                      {item.materialPrice?.toLocaleString("vi-VN")}
+                      {(
+                        item.variantCostPrice || item.materialCostPrice
+                      )?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-6">
                       {item.quantity.toLocaleString("vi-VN")}
@@ -306,7 +394,7 @@ export default function ListMaterials() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-0">
-                    <div className="pt-2 border bg-white ">                   
+                    <div className="py-2 border bg-white ">
                       <h1 className="text-2xl font-bold text-blue-500 ml-5">
                         {item.variantName || item.materialName}
                       </h1>
@@ -321,63 +409,131 @@ export default function ListMaterials() {
                         <div className="col-span-3 col-start-3">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <div className="mb-2 font-bold">
+                              <div className="mb-2 border-b pb-2 font-bold">
                                 <span className="font-bold">Mã hàng:</span>{" "}
                                 {item.materialCode}
                               </div>
 
-                              <div className="mb-2">
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Nhóm hàng:</span>{" "}
                                 {item.parentCategory}
                               </div>
-                              <div className="mb-2">
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Loại hàng:</span>{" "}
                                 {item.category}
                               </div>
-                              <div className="mb-2">
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Thương hiệu:</span>{" "}
                                 {item.brand}
                               </div>
-                              <div className="mb-2">
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Định mức tồn:</span>{" "}
                                 {item.minStock} ➤ {item.maxStock}
                               </div>
-                              <div className="mb-2">
-                                <span className="font-bold">Giá bán:</span>{" "}
+
+                              <div className="mb-2 border-b pb-2">
+                                <span className="font-bold">Giá vốn:</span>{" "}
                                 {(
                                   item.variantCostPrice ||
                                   item.materialCostPrice
                                 ).toLocaleString("vi-VN")}
                               </div>
-                              <div className="mb-2">
-                                <span className="font-bold">Giá vốn:</span>{" "}
-                                {(
-                                  item.variantPrice || item.materialPrice
-                                ).toLocaleString("vi-VN")}
-                              </div>
-                              <div className="mb-2">
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Trọng lượng:</span>{" "}
                                 {item.weight.toLocaleString("vi-VN")} kg
                               </div>
                             </div>
                             <div>
-                              <div className="mb-2">
-                                <span className="font-bold">Mô tả</span>
-                                <div className="border-b border-gray-300"></div>
+                              <div className="mb-2 border-b pb-2">
+                                <span className="font-bold">Giảm giá:</span>{" "}
+                                {item.discount || "Không có"}
                               </div>
-                              <div className="mb-2">
-                                <span className="font-bold">
-                                  Ghi chú đặt hàng
-                                </span>
-                                <div className="border-b border-gray-300"></div>
+                              <div className="mb-2 border-b pb-2 font-bold">
+                                <span className="font-bold">Giá bán:</span>{" "}
+                                {(
+                                  item.variantPrice || item.materialPrice
+                                ).toLocaleString("vi-VN")}
                               </div>
-                              <div className="mb-2">
+                              {item.afterDiscountPrice ? (
+                                <div className="mb-2 border-b pb-2 font-bold">
+                                  <span className="font-bold">
+                                    Giá sau khi giảm:
+                                  </span>{" "}
+                                  {item.afterDiscountPrice.toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                              <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Nhà cung cấp</span>
-                                <div className="border-b border-gray-300"></div>
+                                <div className=" border-gray-300"></div>
                               </div>
                             </div>
                           </div>
                         </div>
+                      </div>
+                      <div className="flex justify-end pr-5 pb-3">
+                        <AlertDialog open={open} onOpenChange={setOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              onClick={() =>
+                                setSelectMaterialId(
+                                  item.variantId || item.materialId
+                                )
+                              }
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                              <RiDiscountPercentLine size={20} />
+                              Thêm mã giảm giá
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Thêm mã giảm giá
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                <div className="flex gap-2 text-black items-center">
+                                  <h1 className="w-28">Giá giảm</h1>
+                                  <Input
+                                    type="number"
+                                    placeholder="Nhập giá giảm"
+                                    value={discount ?? ""} // Use an empty string if discount is undefined
+                                    onChange={handleChangeDiscount}
+                                  />
+                                  <Select
+                                    value={discountType}
+                                    onValueChange={(value) =>
+                                      setDiscountType(value)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[70px] font-bold">
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="1">đ</SelectItem>
+                                      <SelectItem value="2">%</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              {loading ? (
+                                <Button>
+                                  <Loader2 /> Đang xử lý...
+                                </Button>
+                              ) : (
+                                <Button onClick={handleCreateDiscount}>
+                                  Xác nhận
+                                </Button>
+                              )}
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </AccordionContent>

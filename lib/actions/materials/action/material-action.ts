@@ -100,8 +100,32 @@ export async function CreateMaterial(data: any): Promise<Result<void>> {
 }
 export async function UpdateMaterial(data: any): Promise<Result<void>> {
   noStore();
-  console.log(data);
+
   const result = await apiRequest(() => axiosAuth.put("/materials", data));
+
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+export async function UpdateVariant(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() => axiosAuth.put("/variants", data));
+
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+export async function CreateDiscount(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post("/materials/update-material-discount", data)
+  );
   console.log(result);
   if (!result.success) {
     return { success: false, error: result.error };

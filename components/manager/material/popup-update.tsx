@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import {
   Select,
@@ -23,14 +23,18 @@ import { UpdateMaterial } from "@/lib/actions/materials/action/material-action";
 
 export default function UpdateMaterialP({
   item,
-  variantId,
+  setOpenM,
 }: {
   item: IMaterial;
-  variantId?: string | null;
+  setOpenM: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  const [image64, setImage64] = useState("");
+  const [images, setImages] = useState<(string | null)[]>(Array(5).fill(null)); // 5 ô ảnh
+  const [imagesFile, setImagesFile] = useState<(string | null)[]>(
+    Array(5).fill(null)
+  ); // Mảng chứa ảnh dạng base64
   const [loading, setLoading] = useState(false);
   const [selectedBrand, setSelectBrand] = useState({
     id: "",
@@ -47,24 +51,16 @@ export default function UpdateMaterialP({
     const selectedBrandObject = brands?.data.find((item) => item.id === value);
     setSelectBrand(selectedBrandObject || { id: "", name: "" }); // Handle potential missing store
   };
-  const selectedVariant = item.variants.find(
-    (variant) => variant.variantId === variantId
-  );
+
   const [material, setMaterial] = useState({
-    id: selectedVariant ? selectedVariant.variantId : item.material.id,
-    name: selectedVariant ? selectedVariant.sku : item.material.name,
+    id: item.material.id,
+    name: item.material.name,
     weightValue: item.material.weightValue,
     barCode: item.material.barCode,
     description: item.material.description,
-    salePrice: selectedVariant
-      ? selectedVariant.price
-      : item.material.salePrice,
-    costPrice: selectedVariant
-      ? selectedVariant.costPrice
-      : item.material.costPrice,
-    imageFiles: selectedVariant
-      ? selectedVariant.image
-      : item.material.imageUrl,
+    salePrice: item.material.salePrice,
+    costPrice: item.material.costPrice,
+    imageFiles: item.material.imageUrl,
   });
   const handleDescriptionChange = (value: string) => {
     setMaterial((prevMaterial) => ({
@@ -81,8 +77,6 @@ export default function UpdateMaterialP({
   };
 
   if (!item) return <div>Đang tải....</div>;
-
-  const [image64, setImage64] = useState("");
 
   const convertToBase64 = (file: File) => {
     return new Promise<string>((resolve, reject) => {
@@ -102,6 +96,8 @@ export default function UpdateMaterialP({
         const base64 = await convertToBase64(file);
         const base64WithoutPrefix = base64.replace(/^data:.+;base64,/, "");
         setImage64(base64WithoutPrefix);
+
+        // Assuming you have a material state, update it
         setMaterial((prev) => ({
           ...prev,
           imageFiles: base64,
@@ -111,10 +107,7 @@ export default function UpdateMaterialP({
       }
     }
   };
-  const [images, setImages] = useState<(string | null)[]>(Array(5).fill(null)); // 5 ô ảnh
-  const [imagesFile, setImagesFile] = useState<(string | null)[]>(
-    Array(5).fill(null)
-  ); // Mảng chứa ảnh dạng base64
+
   const handleImageUpload = (file: File, index: number) => {
     if (file) {
       const reader = new FileReader();
@@ -166,7 +159,7 @@ export default function UpdateMaterialP({
             color: "white",
           },
         });
-
+        setOpenM(false);
         queryClient.invalidateQueries({
           queryKey: ["MATERIAL_LIST"],
         });
@@ -396,12 +389,19 @@ export default function UpdateMaterialP({
             />
           </div>
           <div className="flex justify-end pt-10">
-            <Button
-              onClick={handleUpdate}
-              className="bg-blue-500 hover:bg-blue-600 font-bold text-white"
-            >
-              Cập nhật
-            </Button>
+            {loading ? (
+              <Button disabled>
+                <Loader2 className="animate-spin" />
+                Đang xử lý...
+              </Button>
+            ) : (
+              <Button
+                onClick={handleUpdate}
+                className="bg-blue-500 hover:bg-blue-600 font-bold text-white"
+              >
+                Cập nhật
+              </Button>
+            )}
           </div>
         </div>
       </div>
