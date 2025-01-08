@@ -11,11 +11,17 @@ export type IMaterialChild = {
   unit: string;
   supplier: string;
   description: string;
+  weightValue:number;
   salePrice: number;
+  costPrice: number;
+  materialCode: string;
   minStock: number;
   brand: string;
+  discount:number | null;
+  afterDiscountPrice: number | null;
   isRewardEligible: boolean;
   imageUrl: string;
+  isActive: boolean;
   subImages: ISubimage[];
 };
 
@@ -23,8 +29,11 @@ export type IVariants = {
   variantId: string;
   sku: string;
   price: number;
+  costPrice:number;
   image: string;
   conversionUnitId: string;
+  discount:number | null;
+  afterDiscountPrice: number | null;
   conversionUnitName: string;
   attributes: IAttribute[];
 };
@@ -69,6 +78,7 @@ export type IMaterialWarehouse = {
   variantName: string;
   variantImage: string;
   brand: string;
+  weight: number;
   supplier: string | null; // Assuming supplier can be null
   quantity: number;
   minStock: number;
@@ -76,6 +86,8 @@ export type IMaterialWarehouse = {
   materialPrice: number;
   materialCostPrice: number;
   variantPrice: number;
+  parentCategory:string;
+  category: string;
   variantCostPrice: number | null;
   discount: number | null;
   afterDiscountPrice: number | null;

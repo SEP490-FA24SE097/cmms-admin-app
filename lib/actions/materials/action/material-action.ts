@@ -98,3 +98,14 @@ export async function CreateMaterial(data: any): Promise<Result<void>> {
 
   return { success: true, data: undefined };
 }
+export async function UpdateMaterial(data: any): Promise<Result<void>> {
+  noStore();
+  console.log(data);
+  const result = await apiRequest(() => axiosAuth.put("/materials", data));
+  console.log(result);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}

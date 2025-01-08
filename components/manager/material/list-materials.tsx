@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useGetMaterialWarehouse } from "@/lib/actions/materials/react-query/material-query";
 import AddMaterials from "./add-materials";
-
+import { RxUpdate } from "react-icons/rx";
 export default function ListMaterials() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
@@ -113,7 +113,7 @@ export default function ListMaterials() {
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
-        <div className="text-2xl font-bold">Phiếu nhập hàng</div>
+        <div className="text-2xl font-bold">Quản lý kho</div>
         <div className="col-span-4">
           <div className="flex justify-between">
             <div className="relative w-[40%]">
@@ -145,7 +145,7 @@ export default function ListMaterials() {
                 // onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               />
             </div>
-            <div className="">
+            <div className="flex gap-5">
               <Dialog open={openM} onOpenChange={setOpenM}>
                 <DialogTrigger asChild>
                   <Button className="bg-blue-500 text-white hover:bg-blue-600">
@@ -156,12 +156,12 @@ export default function ListMaterials() {
                 <DialogContent className="max-w-[1000px] h-[90vh]">
                   <DialogOverlay
                     className="bg-white p-5  overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2
-  [&::-webkit-scrollbar-track]:rounded-full
-  [&::-webkit-scrollbar-track]:bg-gray-100
-  [&::-webkit-scrollbar-thumb]:rounded-full
-  [&::-webkit-scrollbar-thumb]:bg-gray-300
-  dark:[&::-webkit-scrollbar-track]:bg-neutral-700
-  dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 rounded-lg"
+                          [&::-webkit-scrollbar-track]:rounded-full
+                          [&::-webkit-scrollbar-track]:bg-gray-100
+                          [&::-webkit-scrollbar-thumb]:rounded-full
+                          [&::-webkit-scrollbar-thumb]:bg-gray-300
+                          dark:[&::-webkit-scrollbar-track]:bg-neutral-700
+                          dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 rounded-lg"
                   >
                     <DialogTitle>Thêm hàng hóa</DialogTitle>
 
@@ -169,6 +169,11 @@ export default function ListMaterials() {
                   </DialogOverlay>
                 </DialogContent>
               </Dialog>
+              <Link href="materials/update-material">
+                <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                  <RxUpdate /> Cập nhật vật liệu
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -287,10 +292,10 @@ export default function ListMaterials() {
                     </div>
 
                     <div className="col-start-4">
-                      {item.materialCostPrice.toLocaleString("vi-VN")}
+                      {item.materialCostPrice?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-5">
-                      {item.materialPrice.toLocaleString("vi-VN")}
+                      {item.materialPrice?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-6">
                       {item.quantity.toLocaleString("vi-VN")}
@@ -301,12 +306,7 @@ export default function ListMaterials() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-0">
-                    <div className="pt-2 border bg-white ">
-                      {/* <div className="flex gap-2  my-2 mx-5">
-                        <Button className="font-bold bg-blue-500">
-                          Thông tin chi tiết
-                        </Button>
-                      </div> */}
+                    <div className="pt-2 border bg-white ">                   
                       <h1 className="text-2xl font-bold text-blue-500 ml-5">
                         {item.variantName || item.materialName}
                       </h1>
@@ -320,7 +320,7 @@ export default function ListMaterials() {
                         </div>
                         <div className="col-span-3 col-start-3">
                           <div className="grid grid-cols-2 gap-4">
-                            <div>
+                            <div className="space-y-2">
                               <div className="mb-2 font-bold">
                                 <span className="font-bold">Mã hàng:</span>{" "}
                                 {item.materialCode}
@@ -328,11 +328,11 @@ export default function ListMaterials() {
 
                               <div className="mb-2">
                                 <span className="font-bold">Nhóm hàng:</span>{" "}
-                                Vat lieu tho
+                                {item.parentCategory}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Loại hàng:</span>{" "}
-                                Hàng hóa
+                                {item.category}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Thương hiệu:</span>{" "}
@@ -344,17 +344,20 @@ export default function ListMaterials() {
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Giá bán:</span>{" "}
-                                {(item.variantCostPrice || item.materialCostPrice).toLocaleString("vi-VN")}
+                                {(
+                                  item.variantCostPrice ||
+                                  item.materialCostPrice
+                                ).toLocaleString("vi-VN")}
                               </div>
                               <div className="mb-2">
                                 <span className="font-bold">Giá vốn:</span>{" "}
-                                {(item.variantPrice || item.materialPrice).toLocaleString("vi-VN")}
+                                {(
+                                  item.variantPrice || item.materialPrice
+                                ).toLocaleString("vi-VN")}
                               </div>
                               <div className="mb-2">
-                                <span className="font-bold">Trọng lượng:</span>
-                              </div>
-                              <div className="mb-2">
-                                <span className="font-bold">Vị trí:</span>
+                                <span className="font-bold">Trọng lượng:</span>{" "}
+                                {item.weight.toLocaleString("vi-VN")} kg
                               </div>
                             </div>
                             <div>
