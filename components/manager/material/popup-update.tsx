@@ -21,7 +21,13 @@ import { useGetBrand } from "@/lib/actions/brand/react-query/brand-query";
 import { useGetCategory } from "@/lib/actions/materials-fields/react-query/category-query";
 import { UpdateMaterial } from "@/lib/actions/materials/action/material-action";
 
-export default function UpdateMaterialP({ item }: { item: IMaterial }) {
+export default function UpdateMaterialP({
+  item,
+  variantId,
+}: {
+  item: IMaterial;
+  variantId?: string | null;
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -41,15 +47,24 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
     const selectedBrandObject = brands?.data.find((item) => item.id === value);
     setSelectBrand(selectedBrandObject || { id: "", name: "" }); // Handle potential missing store
   };
+  const selectedVariant = item.variants.find(
+    (variant) => variant.variantId === variantId
+  );
   const [material, setMaterial] = useState({
-    id: item.material.id,
-    name: item.material.name,
+    id: selectedVariant ? selectedVariant.variantId : item.material.id,
+    name: selectedVariant ? selectedVariant.sku : item.material.name,
     weightValue: item.material.weightValue,
     barCode: item.material.barCode,
     description: item.material.description,
-    salePrice: item.material.salePrice,
-    costPrice: item.material.costPrice,
-    imageFiles: item.material.imageUrl,
+    salePrice: selectedVariant
+      ? selectedVariant.price
+      : item.material.salePrice,
+    costPrice: selectedVariant
+      ? selectedVariant.costPrice
+      : item.material.costPrice,
+    imageFiles: selectedVariant
+      ? selectedVariant.image
+      : item.material.imageUrl,
   });
   const handleDescriptionChange = (value: string) => {
     setMaterial((prevMaterial) => ({
@@ -67,80 +82,6 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
 
   if (!item) return <div>Đang tải....</div>;
 
-  //   const handleUpdateClick = async () => {
-  //     if (!customer.province) {
-  //       toast({
-  //         title: "Lỗi",
-  //         description: "Vui lòng chọn tỉnh.",
-  //         variant: "destructive",
-  //       });
-  //       return;
-  //     }
-
-  //     if (!customer.district) {
-  //       toast({
-  //         title: "Lỗi",
-  //         description: "Vui lòng chọn quận/huyện.",
-  //         variant: "destructive",
-  //       });
-  //       return;
-  //     }
-
-  //     if (!customer.ward) {
-  //       toast({
-  //         title: "Lỗi",
-  //         description: "Vui lòng chọn phường/xã.",
-  //         variant: "destructive",
-  //       });
-  //       return;
-  //     }
-
-  //     const data = {
-  //       id: item.id,
-  //       fullName: customer.fullName,
-  //       email: customer.email,
-  //       phoneNumber: customer.phoneNumber,
-  //       province: customer.province,
-  //       district: customer.district,
-  //       ward: customer.ward,
-  //       address: customer.address,
-  //       taxCode: customer.taxCode,
-  //       note: customer.note,
-  //     };
-
-  //     try {
-  //       setIsLoading(true);
-  //       const result = await UpdateCustomerC(data);
-  //       if (result.success) {
-  //         toast({
-  //           title: "Thành công",
-  //           description: "Đơn vị mới đã được tạo thành công.",
-  //           style: {
-  //             backgroundColor: "green",
-  //             color: "white",
-  //           },
-  //         });
-
-  //         queryClient.invalidateQueries({
-  //           queryKey: ["ALL_CUSTOMER"],
-  //         });
-  //       } else {
-  //         toast({
-  //           title: "Lỗi",
-  //           description: result.error || "Có lỗi xảy ra vui lòng thử lại.",
-  //           variant: "destructive",
-  //         });
-  //       }
-  //     } catch (error) {
-  //       toast({
-  //         title: "Lỗi",
-  //         description: "Có lỗi xảy ra khi kết nối đến server.",
-  //         variant: "destructive",
-  //       });
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
   const [image64, setImage64] = useState("");
 
   const convertToBase64 = (file: File) => {
@@ -152,7 +93,9 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUploadMain = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
@@ -168,6 +111,34 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
       }
     }
   };
+  const [images, setImages] = useState<(string | null)[]>(Array(5).fill(null)); // 5 ô ảnh
+  const [imagesFile, setImagesFile] = useState<(string | null)[]>(
+    Array(5).fill(null)
+  ); // Mảng chứa ảnh dạng base64
+  const handleImageUpload = (file: File, index: number) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        let base64 = reader.result as string;
+
+        // Xóa tiền tố "data:<mime-type>;base64,"
+        const base64WithoutPrefix = base64.replace(/^data:.+;base64,/, "");
+
+        // Cập nhật hình ảnh vào ô tương ứng
+        const updatedImages = [...images];
+        updatedImages[index] = URL.createObjectURL(file); // Hiển thị ảnh
+        setImages(updatedImages);
+
+        // Cập nhật base64 vào mảng imagesFile
+        const updatedImagesFile = [...imagesFile];
+        updatedImagesFile[index] = base64WithoutPrefix;
+        setImagesFile(updatedImagesFile);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const filteredArray = imagesFile.filter((item) => item !== null);
+
   const handleUpdate = async () => {
     const data = {
       id: material.id,
@@ -179,7 +150,8 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
       description: material.description,
       salePrice: material.salePrice,
       costPrice: material.costPrice,
-      imageFiles: [image64],
+      mainImage: image64,
+      subImages: filteredArray,
     };
     setLoading(true);
 
@@ -215,30 +187,69 @@ export default function UpdateMaterialP({ item }: { item: IMaterial }) {
       setLoading(false);
     }
   };
+
   return (
     <div>
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
         <div className="col-span-2 items-center">
           {" "}
-          <img
-            src={material.imageFiles}
-            alt="Material"
-            style={{
-              width: "350px",
-              height: "350px",
-              objectFit: "cover",
-              cursor: "pointer",
-            }}
-            onClick={() => document.getElementById("image-upload")?.click()}
-          />
-          <input
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleImageUpload}
-          />
+          <div>
+            <h1 className="font-bold">Ảnh chính</h1>
+            <img
+              src={material.imageFiles}
+              alt="Material"
+              style={{
+                width: "300px",
+                height: "300px",
+                objectFit: "cover",
+                cursor: "pointer",
+              }}
+              onClick={() => document.getElementById("image-upload")?.click()}
+            />
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleImageUploadMain}
+            />
+          </div>
+          <div>
+            <h1 className="font-bold">Ảnh phụ</h1>
+            <div className="mb-4 flex gap-5 items-center">
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative border border-dashed border-gray-300"
+                >
+                  <label className="block cursor-pointer">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={`Uploaded ${index + 1}`}
+                        className="w-16 h-16 object-cover"
+                      />
+                    ) : (
+                      <img
+                        src="/upload-file.png"
+                        className="w-16 h-16 object-cover"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleImageUpload(e.target.files![0], index)
+                      }
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
         <div className="col-span-3 col-start-3 space-y-3">
           <div className="grid grid-cols-3 grid-rows-1 gap-4">
             <div className="font-bold">Tên Vật liệu:</div>

@@ -210,7 +210,30 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
   const handleDescriptionChange = (value: string) => {
     setDescription(value);
   };
+  const [mainImg, setMainImg] = useState({ base64: "", img: "" });
+  const convertToBase64 = (file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
+  const handleImageUploadMain = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const base64 = await convertToBase64(file);
+        const base64WithoutPrefix = base64.replace(/^data:.+;base64,/, "");
+        setMainImg({ base64: base64WithoutPrefix, img: base64 });
+      } catch (error) {
+        console.error("Error converting image to base64:", error);
+      }
+    }
+  };
   const handleCreateMaterial = async () => {
     // Tạo một đối tượng tạm thời để lưu trữ các giá trị
     const tempData: MaterialData = {
@@ -250,11 +273,20 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
         return; // Dừng lại nếu có trường không hợp lệ
       }
     }
+    if (!mainImg.base64) {
+      toast({
+        title: "Không có ảnh chính",
+        description: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
 
+      return;
+    }
     // Nếu tất cả các trường đều hợp lệ, định nghĩa data
     const data = {
       ...tempData,
-      imagesFile: filteredArray,
+      mainImage: mainImg.base64,
+      subImages: filteredArray,
       description: description,
       materialUnitDtoList: unitList,
     };
@@ -387,36 +419,63 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
               )}
             </div>
           </div>
-          <div className="mb-4 flex gap-5 items-center">
-            {images.map((image, index) => (
-              <div
-                key={index}
-                className="relative border border-dashed border-gray-300"
-              >
-                <label className="block cursor-pointer">
-                  {image ? (
-                    <img
-                      src={image}
-                      alt={`Uploaded ${index + 1}`}
-                      className="w-24 h-24 object-cover"
+          <div className="flex gap-5">
+            <h1>Ảnh chính</h1>
+            <label className="block cursor-pointer">
+              {mainImg ? (
+                <img
+                  src={mainImg.img}
+                  alt={`MainImg`}
+                  className="w-32 h-32 object-cover"
+                />
+              ) : (
+                <img
+                  src="/upload-file.png"
+                  className="w-32 h-32 object-cover"
+                />
+              )}
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleImageUploadMain}
+              />
+            </label>
+          </div>
+          <div>
+            <h1>Ảnh phụ</h1>
+            <div className="mb-4 flex gap-5 items-center">
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative border border-dashed border-gray-300"
+                >
+                  <label className="block cursor-pointer">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={`Uploaded ${index + 1}`}
+                        className="w-24 h-24 object-cover"
+                      />
+                    ) : (
+                      <img
+                        src="/upload-file.png"
+                        className="w-24 h-24 object-cover"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleImageUpload(e.target.files![0], index)
+                      }
                     />
-                  ) : (
-                    <img
-                      src="/upload-file.png"
-                      className="w-24 h-24 object-cover"
-                    />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) =>
-                      handleImageUpload(e.target.files![0], index)
-                    }
-                  />
-                </label>
-              </div>
-            ))}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         <div className="col-span-2 col-start-4">

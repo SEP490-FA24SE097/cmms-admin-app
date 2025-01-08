@@ -366,6 +366,24 @@ export default function UpdateMaterialC() {
                                       </h1>
                                     </div>
                                   </div>
+                                  <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                    <div className="flex gap-2 border-b pb-2">
+                                      <h1 className="font-bold">
+                                        Giá sau giảm:
+                                      </h1>{" "}
+                                      <h1>
+                                        {(
+                                          item.material.afterDiscountPrice || ""
+                                        ).toLocaleString("vi-VN")}
+                                      </h1>
+                                    </div>
+                                    {/* <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">Giảm giá:</h1>{" "}
+                                        <h1>
+                                          {variant.discount || "Không có"}
+                                        </h1>
+                                      </div> */}
+                                  </div>
                                 </div>
                                 <div className="flex justify-end gap-5 ">
                                   <Dialog>
@@ -429,7 +447,10 @@ export default function UpdateMaterialC() {
                           </div>
                         </TabsContent>
                         {item.variants.map((variant, index) => (
-                          <TabsContent value={`${variant.variantId}`}>
+                          <TabsContent
+                            key={variant.variantId}
+                            value={`${variant.variantId}`}
+                          >
                             <div className="pt-2 bg-white">
                               <div className="grid grid-cols-5 grid-rows-1 gap-4">
                                 <div className="col-span-2">
@@ -439,59 +460,142 @@ export default function UpdateMaterialC() {
                                     alt={`${index}`}
                                   />
                                 </div>
-                                <div className="col-span-3 col-start-3 text-lg space-y-3">
-                                  <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">
-                                        Mã vật liệu:
-                                      </h1>{" "}
-                                      <h1>{item.material.materialCode}</h1>
+                                <div className="col-span-3 col-start-3 text-lg flex flex-col justify-between">
+                                  <div className=" space-y-3">
+                                    <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Mã vật liệu:
+                                        </h1>{" "}
+                                        <h1>{item.material.materialCode}</h1>
+                                      </div>
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Tên vật liệu:
+                                        </h1>{" "}
+                                        <h1>{variant.sku}</h1>
+                                      </div>
                                     </div>
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">
-                                        Tên vật liệu:
-                                      </h1>{" "}
-                                      <h1>{variant.sku}</h1>
+                                    <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">Đơn vị:</h1>{" "}
+                                        <h1>{variant.conversionUnitName}</h1>
+                                      </div>
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Tồn kho tối thiểu:
+                                        </h1>{" "}
+                                        <h1>{item.material.minStock}</h1>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Thương hiệu:
+                                        </h1>{" "}
+                                        <h1>{item.material.brand}</h1>
+                                      </div>
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Phân loại:
+                                        </h1>{" "}
+                                        <h1>{item.material.category}</h1>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">Giá:</h1>{" "}
+                                        <h1>
+                                          {variant.price.toLocaleString(
+                                            "vi-VN"
+                                          )}
+                                        </h1>
+                                      </div>
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">Giảm giá:</h1>{" "}
+                                        <h1>
+                                          {variant.discount || "Không có"}
+                                        </h1>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                                      <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">
+                                          Giá sau giảm:
+                                        </h1>{" "}
+                                        <h1>
+                                          {(
+                                            variant.afterDiscountPrice || ""
+                                          ).toLocaleString("vi-VN")}
+                                        </h1>
+                                      </div>
+                                      {/* <div className="flex gap-2 border-b pb-2">
+                                        <h1 className="font-bold">Giảm giá:</h1>{" "}
+                                        <h1>
+                                          {variant.discount || "Không có"}
+                                        </h1>
+                                      </div> */}
                                     </div>
                                   </div>
-                                  <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">Đơn vị:</h1>{" "}
-                                      <h1>{variant.conversionUnitName}</h1>
-                                    </div>
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">
-                                        Tồn kho tối thiểu:
-                                      </h1>{" "}
-                                      <h1>{item.material.minStock}</h1>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">
-                                        Thương hiệu:
-                                      </h1>{" "}
-                                      <h1>{item.material.brand}</h1>
-                                    </div>
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">Phân loại:</h1>{" "}
-                                      <h1>{item.material.category}</h1>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">Giá:</h1>{" "}
-                                      <h1>
-                                        {(
-                                          variant.afterDiscountPrice ||
-                                          variant.price
-                                        ).toLocaleString("vi-VN")}
-                                      </h1>
-                                    </div>
-                                    <div className="flex gap-2 border-b pb-2">
-                                      <h1 className="font-bold">Giảm giá:</h1>{" "}
-                                      <h1>{variant.discount || "Không có"}</h1>
-                                    </div>
+                                  <div className="flex justify-end gap-5 ">
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button className="bg-green-500 text-white hover:bg-green-600">
+                                          <RxUpdate /> Cập nhật
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-[1000px] h-[470px]">
+                                        <DialogOverlay className="bg-white p-5 rounded-lg">
+                                          <UpdateMaterialP
+                                            item={item}
+                                            variantId={variant.variantId}
+                                          />
+                                        </DialogOverlay>
+                                      </DialogContent>
+                                    </Dialog>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        {/* {item.customerStatus === "Ngừng hoạt động" ? (
+                                  <Button className="bg-green-500 text-white hover:bg-green-600">
+                                    <FaLock /> Mở hoạt động
+                                  </Button>
+                                ) : (
+                                  <Button variant="destructive">
+                                    <FaLock /> Ngừng hoạt động
+                                  </Button>
+                                )} */}
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Cập nhật trạng thái
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Bạn có chắc muốn cập nhật trạng thái
+                                            của người dùng này không?
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Hủy
+                                          </AlertDialogCancel>
+                                          {isLoading ? (
+                                            <Button className="" disabled>
+                                              <Loader2 className="animate-spin" />
+                                              Đang xử lý
+                                            </Button>
+                                          ) : (
+                                            <AlertDialogAction
+                                            //   onClick={() =>
+                                            //     handleUpdateStatus(item.id)
+                                            //   }
+                                            >
+                                              Cập nhật
+                                            </AlertDialogAction>
+                                          )}
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </div>
                                 </div>
                               </div>
