@@ -455,7 +455,11 @@ export default function SellerHome() {
                       className="flex items-center px-2 py-1 rounded-md border border-transparent hover:border-blue-600 hover:border"
                       key={index}
                       onClick={() =>
-                        handleSelectMaterial({ ...product, number: 0 })
+                        handleSelectMaterial({
+                          ...product,
+                          number: 0,
+                          variantPrice: product.variantPrice ?? 0,
+                        })
                       }
                     >
                       <img

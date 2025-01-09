@@ -54,35 +54,37 @@ import {
 
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { useGetSuplier } from "@/lib/actions/supplier/react-query/supplier-query";
-import { useGetImport } from "@/lib/actions/import/react-quert/import-query";
+
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useGetMaterialWarehouse } from "@/lib/actions/materials/react-query/material-query";
-import AddMaterials from "./add-materials";
+
 import { RxUpdate } from "react-icons/rx";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+
+import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
+import { useSession } from "next-auth/react";
 import {
-  CreateDiscount,
-  UpdateStock,
-} from "@/lib/actions/materials/action/material-action";
-export default function ListMaterials() {
+  CreateAutoImport,
+  UpdateStockInStore,
+} from "@/lib/actions/material-store/action/material-store-action";
+export default function ListMaterialsInStore() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openM, setOpenM] = useState(false);
-  const [discount, setDiscount] = useState<number | 0>(0);
+  const [importQuantity, setImportQuantity] = useState<number | 0>(0);
   const [minStock, setMinStock] = useState(0);
   const [maxStock, setMaxStock] = useState(0);
   const [discountType, setDiscountType] = useState<string>("1");
-  const handleChangeDiscount =
-    (price: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseFloat(event.target.value);
-      const validValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, price));
-      setDiscount(validValue);
-    };
+  const handleChangeDiscount = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(event.target.value);
+    const validValue = isNaN(value) ? 0 : Math.max(0, Number(value));
+    setImportQuantity(validValue);
+  };
 
   const handleChangeMinStock = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(0, Number(event.target.value));
@@ -127,10 +129,11 @@ export default function ListMaterials() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-
+  const StoreId = session?.user.user.storeId || "";
   const [searchParams, setSearchParams] = useState({
     page: currentPage,
     itemPerPage: 10,
+    storeId: StoreId,
   });
 
   useEffect(() => {
@@ -142,28 +145,22 @@ export default function ListMaterials() {
   }, [selectedSupplier.id, currentPage]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
-  const { data: materialsWarehouse, isLoading: isLoadingMaterialsWarehouse } =
-    useGetMaterialWarehouse(searchParams);
-  const totalPages = materialsWarehouse?.totalPages || 1;
+  const { data: materialsStore, isLoading: isLoadingMaterialsStore } =
+    useGetMaterialStore(searchParams);
+  const totalPages = materialsStore?.totalPages || 1;
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
-  const getFinalDiscount = () => {
-    if (discountType === "2" && discount) {
-      return `${discount}%`; // Append "%" for percentage type
-    }
-    return `${discount}`; // Default to discount as a number for currency type
-  };
+
   const [selectMaterialId, setSelectMaterialId] = useState("");
   const [selectVariantId, setSelectVariantId] = useState("");
   // Lưu giá trị trả về từ getFinalDiscount
-  const finalDiscount = getFinalDiscount();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const handleCreateDiscount = async () => {
-    if (discount && discount < -1) {
+  const handleCreateAutoImport = async () => {
+    if (importQuantity && importQuantity < -1) {
       toast({
         title: "Lỗi",
         description: "Không được để giảm giá âm.",
@@ -172,18 +169,19 @@ export default function ListMaterials() {
       return;
     }
     const data = {
+      storeId: StoreId,
       materialId: selectMaterialId,
       variantId: selectVariantId || null,
-      discount: finalDiscount,
+      importQuantity: importQuantity,
     };
     setLoading(true);
 
     try {
-      const result = await CreateDiscount(data);
+      const result = await CreateAutoImport(data);
       if (result.success) {
         toast({
           title: "Thành công",
-          description: "Giảm giá đã được tạo thành công.",
+          description: "Thêm số lượng cập nhật tự động thành công thành công.",
           style: {
             backgroundColor: "green",
             color: "white",
@@ -191,13 +189,14 @@ export default function ListMaterials() {
         });
 
         queryClient.invalidateQueries({
-          queryKey: ["MATERIAL_WAREHOUSE_LIST"],
+          queryKey: ["MATERIAL_STORE_LIST"],
         });
         setOpen(false);
       } else {
         toast({
           title: "Lỗi",
-          description: result.error || "Có lỗi xảy ra khi tạo giảm giá.",
+          description:
+            result.error || "Có lỗi xảy ra khi tạo số lượng cập nhật.",
           variant: "destructive",
         });
       }
@@ -235,11 +234,12 @@ export default function ListMaterials() {
       variantId: selectVariantId || null,
       minStock: minStock,
       maxStock: maxStock,
+      storeId: StoreId,
     };
     setLoadingS(true);
 
     try {
-      const result = await UpdateStock(data);
+      const result = await UpdateStockInStore(data);
       if (result.success) {
         toast({
           title: "Thành công",
@@ -251,7 +251,7 @@ export default function ListMaterials() {
         });
 
         queryClient.invalidateQueries({
-          queryKey: ["MATERIAL_WAREHOUSE_LIST"],
+          queryKey: ["MATERIAL_STORE_LIST"],
         });
         setOpenS(false);
       } else {
@@ -274,7 +274,7 @@ export default function ListMaterials() {
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
-        <div className="text-2xl font-bold">Quản lý kho tổng</div>
+        <div className="text-2xl font-bold">Quản lý kho cửa hàng</div>
         <div className="col-span-4">
           <div className="flex justify-between">
             <div className="relative w-[40%]">
@@ -325,8 +325,6 @@ export default function ListMaterials() {
                           dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 rounded-lg"
                   >
                     <DialogTitle>Thêm hàng hóa</DialogTitle>
-
-                    <AddMaterials setOpenM={setOpenM} />
                   </DialogOverlay>
                 </DialogContent>
               </Dialog>
@@ -426,12 +424,12 @@ export default function ListMaterials() {
               <div>Mã hàng</div>
               <div className="col-span-2">Tên sản phẩm</div>
               <div className="col-start-4">Giá bán</div>
-              <div className="col-start-5">Giá vốn</div>
+              <div className="col-start-5">Tự động</div>
               <div className="col-start-6">Tồn kho</div>
               <div className="col-start-7">Đơn vị</div>
               <div className="col-start-8">Thời gian tạo</div>
             </div>
-            {materialsWarehouse?.data.map((item, index) => (
+            {materialsStore?.data.map((item, index) => (
               <Accordion type="single" collapsible key={index}>
                 <AccordionItem value={`item-${index}`}>
                   <AccordionTrigger
@@ -458,9 +456,7 @@ export default function ListMaterials() {
                       )?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-5">
-                      {(
-                        item.variantCostPrice || item.materialCostPrice
-                      )?.toLocaleString("vi-VN")}
+                      {item.autoImportQuantity?.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-6">
                       {item.quantity.toLocaleString("vi-VN")}
@@ -511,8 +507,7 @@ export default function ListMaterials() {
                               <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Giá vốn:</span>{" "}
                                 {(
-                                  item.variantCostPrice ||
-                                  item.materialCostPrice
+                                  item.variantPrice || item.materialPrice
                                 ).toLocaleString("vi-VN")}
                               </div>
                               <div className="mb-2 border-b pb-2">
@@ -557,7 +552,7 @@ export default function ListMaterials() {
                             <Button
                               onClick={() => {
                                 setSelectMaterialId(item.materialId);
-                                setSelectVariantId(item.variantId);
+                                setSelectVariantId(item.variantId || "");
                               }}
                               className="bg-blue-500 hover:bg-blue-600 text-white"
                             >
@@ -610,44 +605,28 @@ export default function ListMaterials() {
                             <Button
                               onClick={() => {
                                 setSelectMaterialId(item.materialId);
-                                setSelectVariantId(item.variantId);
+                                setSelectVariantId(item.variantId || "");
                               }}
                               className="bg-blue-500 hover:bg-blue-600 text-white"
                             >
                               <RiDiscountPercentLine size={20} />
-                              Thêm mã giảm giá
+                              Thêm số lượng tự động
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Thêm mã giảm giá
+                                Thêm số lượng vật liệu cần nhập tự động
                               </AlertDialogTitle>
                               <AlertDialogDescription>
                                 <div className="flex gap-2 text-black items-center">
-                                  <h1 className="w-28 font-bold">Giá giảm</h1>
+                                  <h1 className="w-28 font-bold">Số lượng</h1>
                                   <Input
                                     type="number"
-                                    placeholder="Nhập giá giảm"
-                                    value={discount ?? ""} // Use an empty string if discount is undefined
-                                    onChange={handleChangeDiscount(
-                                      item.variantPrice || item.materialPrice
-                                    )}
+                                    placeholder="Nhập số lượng"
+                                    value={importQuantity ?? ""} // Use an empty string if discount is undefined
+                                    onChange={handleChangeDiscount}
                                   />
-                                  <Select
-                                    value={discountType}
-                                    onValueChange={(value) =>
-                                      setDiscountType(value)
-                                    }
-                                  >
-                                    <SelectTrigger className="w-[70px] font-bold">
-                                      <SelectValue placeholder="Select type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="1">đ</SelectItem>
-                                      <SelectItem value="2">%</SelectItem>
-                                    </SelectContent>
-                                  </Select>
                                 </div>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -658,7 +637,7 @@ export default function ListMaterials() {
                                   <Loader2 /> Đang xử lý...
                                 </Button>
                               ) : (
-                                <Button onClick={handleCreateDiscount}>
+                                <Button onClick={handleCreateAutoImport}>
                                   Xác nhận
                                 </Button>
                               )}
@@ -717,7 +696,7 @@ export default function ListMaterials() {
             </Pagination>
 
             <div className="ml-5">
-              Có {materialsWarehouse?.total} kết quả tìm kiếm
+              Có {materialsStore?.total} kết quả tìm kiếm
             </div>
           </div>
         </div>

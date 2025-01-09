@@ -126,7 +126,21 @@ export async function CreateDiscount(data: any): Promise<Result<void>> {
   const result = await apiRequest(() =>
     axiosAuth.post("/materials/update-material-discount", data)
   );
-  console.log(result);
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+
+export async function UpdateStock(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post("/warehouse/update-warehouse-material-min-max-stock", data)
+  );
+  console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };
   }

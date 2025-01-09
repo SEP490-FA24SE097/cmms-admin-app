@@ -421,8 +421,8 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
           </div>
           <div className="flex gap-5">
             <h1>Ảnh chính</h1>
-            <label className="block cursor-pointer">
-              {mainImg ? (
+            <label className="block border border-dashed cursor-pointer">
+              {mainImg.img ? (
                 <img
                   src={mainImg.img}
                   alt={`MainImg`}

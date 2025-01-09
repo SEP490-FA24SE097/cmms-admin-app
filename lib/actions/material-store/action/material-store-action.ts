@@ -11,6 +11,7 @@ import {
   fetchSingleData,
 } from "@/lib/api/api-handler/generic";
 import { Material } from "../type/material-store";
+import { axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
 export async function getMaterialsStore(
@@ -28,4 +29,38 @@ export async function getMaterialsStore(
   }
 
   return result.data;
+}
+
+export async function UpdateStockInStore(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post(
+      "/store-inventories/update-store-material-min-max-stock",
+      data
+    )
+  );
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+
+export async function CreateAutoImport(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post(
+      "/store-inventories/update-auto-import-material-quantity",
+      data
+    )
+  );
+  console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
 }

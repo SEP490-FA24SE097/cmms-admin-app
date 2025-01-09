@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useSession } from "next-auth/react";
-import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
 import { useMaterialContext } from "@/context/import-context";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineDownloadDone } from "react-icons/md";
@@ -288,7 +287,12 @@ export default function CreateImport() {
                         <li
                           key={index}
                           onClick={() =>
-                            addList({ ...item, discount: 0, note: "" })
+                            addList({
+                              ...item,
+                              variantPrice: item.variantPrice ?? 0, // Ensure variantPrice is a number
+                              discount: 0,
+                              note: "",
+                            })
                           }
                           className="p-2 rounded-lg hover:bg-blue-100 cursor-pointer"
                         >

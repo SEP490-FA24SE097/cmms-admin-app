@@ -90,6 +90,7 @@ export type IMaterialWarehouse = {
   category: string;
   variantCostPrice: number | null;
   discount: string | null;
+  unit: string;
   afterDiscountPrice: number | null;
   lastUpdateTime: string;
   attributes: IMaterialAttributeWarehouse[];

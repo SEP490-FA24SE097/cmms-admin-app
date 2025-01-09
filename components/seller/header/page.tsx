@@ -50,52 +50,7 @@ export default function HeaderSeler() {
       materialName: searchTerm,
     }));
   }, [searchTerm]);
-  // const materials: Material[] = [
-  //   {
-  //     id: "aad387e7-df7e-4bca-b163-591f6b6abd06",
-  //     materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-  //     materialCode: null,
-  //     materialName: "vật liệu 2",
-  //     materialImage:
-  //       "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-  //     variantId: "14eae9b8-18ca-444f-8561-855bc25b4b53",
-  //     variantName: "vật liệu 2-biến thể 1",
-  //     price: 100000,
-  //     variantImage:
-  //       "https://www.sondulux.net.vn/image/cache/catalog/san-pham/son-dulux-weathershield-colour-protect-01-800x800.jpg",
-  //     quantity: 15,
-  //     lastUpdateTime: "0001-01-01T00:00:00",
-  //   },
-  //   {
-  //     id: "b37586fc-60a5-4dab-89c4-6be63a31f02c",
-  //     materialId: "e356c732-8493-4ce1-beb4-44a78ab58a46",
-  //     materialCode: null,
-  //     materialName: "vật liệu 3",
-  //     materialImage:
-  //       "https://vlxdcantho.com/wp-content/uploads/2022/06/xi-mang-viet-nhat.jpg",
-  //     variantId: null,
-  //     variantName: null,
-  //     variantImage: null,
-  //     price: 200000,
-  //     quantity: 10,
-  //     lastUpdateTime: "0001-01-01T00:00:00",
-  //   },
-  //   {
-  //     id: "22cc3bdf-2800-4bee-88d3-a6efae05a275",
-  //     materialId: "8fcded53-6a10-4219-a938-75f49fe645ec",
-  //     materialCode: null,
-  //     materialName: "vật liệu 2",
-  //     materialImage:
-  //       "https://sonongtho.com/wp-content/uploads/2017/10/S%C6%A1n-L%C3%B3t-Weathershield.png",
-  //     variantId: "f4b4cb78-5129-41ac-bacd-114a4280f9f0",
-  //     variantName: "vật liệu 2-biến thể 2",
-  //     price: 300000,
-  //     variantImage:
-  //       "https://thegioicongnghiep.com/image/vn/2022_01/son-nuoc-dulux-19yr-14629mau-do-5-lit-19yr-14629mau-do-dulux-1641288195.png",
-  //     quantity: 15,
-  //     lastUpdateTime: "0001-01-01T00:00:00",
-  //   },
-  // ];
+
   const {
     invoices,
     activeInvoiceIndex,
@@ -169,7 +124,13 @@ export default function HeaderSeler() {
               filteredData.map((item, index) => (
                 <li
                   key={index}
-                  onClick={() => handleSelectMaterial({ ...item, number: 0 })}
+                  onClick={() =>
+                    handleSelectMaterial({
+                      ...item,
+                      variantPrice: item.variantPrice ?? 0,
+                      number: 0,
+                    })
+                  }
                   className="p-2 rounded-lg hover:bg-blue-100 cursor-pointer"
                 >
                   <div className="max-w-md mx-auto">
