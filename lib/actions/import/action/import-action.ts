@@ -30,11 +30,34 @@ export async function getImports(
   return result.data;
 }
 
+export async function getImportById(
+  id: string
+): Promise<ApiSingleResponse<IImport>> {
+  const result = await fetchSingleData<IImport>(`/imports/${id}`);
+  if (!result.success) {
+    return { data: null, error: result.error };
+  }
+
+  return result.data;
+}
+
 export async function CreateImportAction(data: any): Promise<Result<void>> {
   noStore();
 
   const result = await apiRequest(() => axiosAuth.post("/imports", data));
   console.log(data);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
+
+export async function UpdateImportAction(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() => axiosAuth.put("/imports", data));
+  console.log(result);
   if (!result.success) {
     return { success: false, error: result.error };
   }

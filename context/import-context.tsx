@@ -44,6 +44,7 @@ export const MaterialProvider = ({ children }: { children: ReactNode }) => {
 
   // Add a new material to the list
   const addList = (newMaterial: IMaterial) => {
+    console.log(newMaterial);
     setMaterials((prevMatrials) => {
       const existingMaterial = prevMatrials.find(
         (material) =>

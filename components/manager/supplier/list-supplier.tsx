@@ -214,6 +214,7 @@ export default function SupllierList() {
             </div>
             {suppliers?.data.map((item, index) => (
               <div
+                key={item.id}
                 className={`grid grid-cols-10 grid-rows-1  gap-4 p-3 ${
                   index % 2 !== 0 ? "bg-slate-100" : "bg-white"
                 }`}

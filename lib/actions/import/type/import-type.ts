@@ -21,6 +21,7 @@ export type IImportDetail = {
   materialId: string;
   variantId: string;
   quantity: number;
+  sku: string;
   unitPrice: number;
   unitDiscount: number;
   unitImportPrice: number;

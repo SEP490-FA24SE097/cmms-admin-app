@@ -1,12 +1,15 @@
 "use client";
-import ImportList from "@/components/import/list-import";
+import CreateImport from "@/components/import/create-import";
+import UpdateImport from "@/components/import/update-import";
 import ManagerHeader from "@/components/manager/header/page";
 import NavHeader from "@/components/manager/nav-header/page";
+import { MaterialProvider } from "@/context/import-context";
 import { useRole } from "@/providers/role-context";
 import { useSession } from "next-auth/react";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState } from "react";
-export default function ImportPage() {
+
+export default function UpdateImportPage() {
   const { data: session } = useSession();
   const { role } = useRole();
   const router = useRouter();
@@ -55,12 +58,15 @@ export default function ImportPage() {
       </div>
     );
   }
-
   return (
-    <div className="bg-slate-200 min-h-screen pb-5">
-      <ManagerHeader />
-      <NavHeader />
-      <ImportList />
-    </div>
+    <MaterialProvider>
+      <div className="bg-slate-100 h-screen flex flex-col">
+        <ManagerHeader />
+        <NavHeader />
+        <div className="flex-1 h-full ">
+          <UpdateImport />
+        </div>
+      </div>
+    </MaterialProvider>
   );
 }

@@ -373,16 +373,16 @@ export default function ListRequestAdmin() {
           </div>
         </div>
         <div className="col-span-4">
-          <Table className="bg-white rounded-sm shadow-lg">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Mã</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Tên sản phẩm</TableHead>
-                <TableHead>Chi nhánh</TableHead>
-                <TableHead className="text-right">Ngày gửi</TableHead>
-                <TableHead className="text-right">SL</TableHead>
-                <TableHead className="text-right"></TableHead>
+          <Table className="bg-white rounded-sm shadow-lg border">
+            <TableHeader className="bg-blue-200">
+              <TableRow className="hover:bg-blue-200">
+                <TableHead className="w-[100px] font-bold">Mã</TableHead>
+                <TableHead className="font-bold">Trạng thái</TableHead>
+                <TableHead className="font-bold">Tên sản phẩm</TableHead>
+                <TableHead className="font-bold">Chi nhánh</TableHead>
+                <TableHead className="text-right font-bold">Ngày gửi</TableHead>
+                <TableHead className="text-right font-bold">SL</TableHead>
+                <TableHead className="text-right font-bold"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

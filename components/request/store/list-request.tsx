@@ -63,6 +63,9 @@ import {
   CreateRequest,
 } from "@/lib/actions/request/action/request-action";
 import { useQueryClient } from "@tanstack/react-query";
+import { IMaterialWarehouse } from "@/lib/actions/materials/type/material-type";
+import { useGetMaterialWarehouse } from "@/lib/actions/materials/react-query/material-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const getStatusDetails = (status: string) => {
   switch (status) {
@@ -118,22 +121,27 @@ export default function ListRequestStore() {
 
     return `${formattedDate} ${formattedTime}`;
   };
-  const [filteredData, setFilteredData] = useState<Material[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
+  const [searchParamsS, setSearchParamS] = useState({
+    page: 1,
+    itemPerPage: 10,
+  });
+
+  useEffect(() => {
+    setSearchParamS((prev) => ({
+      ...prev,
+      materialName: searchTerm,
+    }));
+  }, [searchTerm]);
+  // Fetch material store list
   const { data: materialsList, isLoading: isLoadingMaterialData } =
-    useGetMaterialImport();
+    useGetMaterialWarehouse(searchParamsS);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-
-    // Filter data and handle undefined case
-    const filtered = (materialsList?.data || []).filter((item) =>
-      item.materialName.toLowerCase().includes(value.toLowerCase())
-    );
-
-    setFilteredData(filtered);
     setShowDropdown(value.trim() !== "");
   };
+
   const [currentPage, setCurrentPage] = useState(1);
   const storeId = session?.user.user.storeId || "";
   const [searchParams, setSearchParams] = useState({
@@ -161,10 +169,9 @@ export default function ListRequestStore() {
     }));
   }, [storeId, currentPage]);
 
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    null
-  );
-  const handleSelectMaterial = (material: Material) => {
+  const [selectedMaterial, setSelectedMaterial] =
+    useState<IMaterialWarehouse | null>(null);
+  const handleSelectMaterial = (material: IMaterialWarehouse) => {
     setSelectedMaterial(material);
   };
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
@@ -368,8 +375,16 @@ export default function ListRequestStore() {
 
                     {showDropdown && (
                       <ul className="absolute left-0 z-10 w-full p-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {filteredData.length > 0 ? (
-                          filteredData.map((item, index) => (
+                        {isLoadingMaterialData ? (
+                          <div>
+                            <Skeleton className="h-[50px] w-full rounded-xl" />
+                          </div>
+                        ) : materialsList?.data.length === 0 ? (
+                          <li className="p-2 text-gray-500">
+                            Không có dữ liệu
+                          </li>
+                        ) : (
+                          materialsList?.data.map((item, index) => (
                             <li
                               key={index}
                               onClick={() => handleSelectMaterial(item)}
@@ -408,10 +423,6 @@ export default function ListRequestStore() {
                               </div>
                             </li>
                           ))
-                        ) : (
-                          <li className="p-2 text-gray-500">
-                            Không có dữ liệu
-                          </li>
                         )}
                       </ul>
                     )}
@@ -560,15 +571,25 @@ export default function ListRequestStore() {
           </div>
         </div>
         <div className="col-span-4">
-          <Table className="bg-white rounded-sm shadow-lg">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Mã</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Tên sản phẩm</TableHead>
-                <TableHead className="text-right">Số lượng</TableHead>
-                <TableHead className="text-right">Ngày gửi</TableHead>
-                <TableHead className="text-right">Hủy</TableHead>
+          <Table className="bg-white rounded-sm border ">
+            <TableHeader className="bg-blue-200">
+              <TableRow className="hover:bg-blue-200">
+                <TableHead className="w-[100px] text-black font-bold">
+                  Mã
+                </TableHead>
+                <TableHead className="text-black font-bold">
+                  Trạng thái
+                </TableHead>
+                <TableHead className="text-black font-bold">
+                  Tên sản phẩm
+                </TableHead>
+                <TableHead className="text-right text-black font-bold">
+                  Số lượng
+                </TableHead>
+                <TableHead className="text-right text-black font-bold">
+                  Ngày gửi
+                </TableHead>
+                <TableHead className="text-right text-black font-bold"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

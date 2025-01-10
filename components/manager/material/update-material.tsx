@@ -278,13 +278,19 @@ export default function UpdateMaterialC() {
                   <AccordionContent className="pb-0">
                     <div className="p-5 border bg-white">
                       <Tabs
-                        defaultValue={`${item.material.id}`}
+                        defaultValue={
+                          item.variants.length === 0
+                            ? `${item.material.id}`
+                            : `${item.variants[0].variantId}`
+                        }
                         className="w-full"
                       >
                         <TabsList>
-                          <TabsTrigger value={`${item.material.id}`}>
-                            {item.material.unit}
-                          </TabsTrigger>
+                          {item.variants.length === 0 && (
+                            <TabsTrigger value={`${item.material.id}`}>
+                              {item.material.unit}
+                            </TabsTrigger>
+                          )}
                           {item.variants
                             .filter(
                               (variant) => variant.conversionUnitName !== null

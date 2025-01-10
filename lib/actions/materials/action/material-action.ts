@@ -45,7 +45,7 @@ export async function getMaterialsWarehouse(
   searchParams: Record<string, string | number | boolean>
 ): Promise<ApiListResponse<IMaterialWarehouse>> {
   noStore();
-
+  console.log(searchParams);
   const result = await fetchListDataWithPagi<IMaterialWarehouse>(
     "/warehouse/get-warehouse-products",
     searchParams
@@ -126,7 +126,6 @@ export async function CreateDiscount(data: any): Promise<Result<void>> {
   const result = await apiRequest(() =>
     axiosAuth.post("/materials/update-material-discount", data)
   );
-  console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };
   }

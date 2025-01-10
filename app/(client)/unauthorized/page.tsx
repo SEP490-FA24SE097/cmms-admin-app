@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AuthenPage() {
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -6,12 +8,12 @@ export default function AuthenPage() {
         <p className="mt-4 text-xl">
           Bạn không có quyền truy cập vào trang này.
         </p>
-        <a
+        <Link
           href="/"
           className="mt-6 inline-block px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
         >
           Quay lại trang chủ
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -91,7 +91,6 @@ export default function ImportList() {
     isDateDescending: true,
     supplierId: selectedSupplier.id,
   });
-  console.log(currentPage);
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
@@ -240,7 +239,8 @@ export default function ImportList() {
             <div className="grid grid-cols-8 grid-rows-1 gap-4 bg-blue-100 p-3 font-bold">
               <div>Mã nhập hàng</div>
               <div>Thời gian</div>
-              <div className="col-span-4">Nhà cung cấp</div>
+              <div className="col-span-3">Nhà cung cấp</div>
+              <div className="col-start-6">Số lượng</div>
               <div className="col-start-7">Cần trả NCC</div>
               <div className="col-start-8">Trạng thái</div>
             </div>
@@ -256,8 +256,11 @@ export default function ImportList() {
                     <div>{item.importCode}</div>
                     <div>{formatDateTime(item.timeStamp)}</div>
 
-                    <div className="col-span-4 capitalize">
+                    <div className="col-span-3 capitalize">
                       {item.supplierName}
+                    </div>
+                    <div className="col-start-6">
+                      {item.totalQuantity.toLocaleString("vi-VN")}
                     </div>
                     <div className="col-start-7">
                       {item.totalDue.toLocaleString("vi-VN")}
@@ -347,20 +350,30 @@ export default function ImportList() {
                       </div>
 
                       <div className="mt-3">
-                        <Table>
+                        <Table className="border">
                           <TableHeader className="bg-blue-200 pointer-events-none">
                             <TableRow>
-                              <TableHead className="w-[100px]">
+                              <TableHead className="w-[100px] font-bold">
                                 Mã hàng
                               </TableHead>
-                              <TableHead className="w-[200px]">
+                              <TableHead className="w-[200px] font-bold">
                                 Tên hàng
                               </TableHead>
-                              <TableHead>Số lượng</TableHead>
-                              <TableHead>Đơn giá</TableHead>
-                              <TableHead>Giảm giá</TableHead>
-                              <TableHead>Giá nhập</TableHead>
-                              <TableHead>Thành tiền</TableHead>
+                              <TableHead className="font-bold text-center">
+                                Số lượng
+                              </TableHead>
+                              <TableHead className="font-bold text-center">
+                                Đơn giá
+                              </TableHead>
+                              <TableHead className="font-bold text-center">
+                                Giảm giá
+                              </TableHead>
+                              <TableHead className="font-bold text-center">
+                                Giá nhập
+                              </TableHead>
+                              <TableHead className="font-bold text-right">
+                                Thành tiền
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -386,7 +399,7 @@ export default function ImportList() {
                                     "vi-VN"
                                   )}
                                 </TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="text-right">
                                   {detail.priceAfterDiscount.toLocaleString(
                                     "vi-VN"
                                   )}
@@ -395,6 +408,15 @@ export default function ImportList() {
                             ))}
                           </TableBody>
                         </Table>
+                        {item.status === "Phiếu tạm" && (
+                          <div className="flex justify-end mt-5">
+                            <Link href={`/import/${item.id}`}>
+                              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                                Mở phiếu
+                              </Button>
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </AccordionContent>

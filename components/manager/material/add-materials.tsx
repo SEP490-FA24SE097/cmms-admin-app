@@ -41,6 +41,7 @@ interface Unit {
   unitId: string;
   conversionRate: number;
   price: number;
+  costPrice: number;
 }
 interface MaterialData {
   barcode: string;
@@ -192,7 +193,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
   const handleAddUnit = () => {
     setUnitList((prev) => [
       ...prev,
-      { unitId: "", conversionRate: 0, price: 0 },
+      { unitId: "", conversionRate: 0, price: 0, costPrice: 0 },
     ]);
   };
 
@@ -646,6 +647,19 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
                               "conversionRate",
                               e.target.value
                             )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block w-[150px] text-black font-semibold">
+                          Giá vốn
+                        </label>
+                        <input
+                          className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
+                          type="number"
+                          value={unit.costPrice}
+                          onChange={(e) =>
+                            handleChange(index, "costPrice", e.target.value)
                           }
                         />
                       </div>

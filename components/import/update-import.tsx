@@ -3,7 +3,6 @@ import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { ChangeEvent, useEffect, useState } from "react";
-import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useSession } from "next-auth/react";
 import { useMaterialContext } from "@/context/import-context";
 import { RiDeleteBin5Line } from "react-icons/ri";
@@ -14,7 +13,6 @@ import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -38,17 +36,40 @@ import { FaSave } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetStore } from "@/lib/actions/store/react-query/store-query";
-import { CreateImportAction } from "@/lib/actions/import/action/import-action";
+import {
+  CreateImportAction,
+  UpdateImportAction,
+} from "@/lib/actions/import/action/import-action";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "nextjs-toploader/app";
 
 import { useGetMaterialWarehouse } from "@/lib/actions/materials/react-query/material-query";
 
 import { Skeleton } from "../ui/skeleton";
+import { IImport, IImportDetail } from "@/lib/actions/import/type/import-type";
+import { useParams } from "next/navigation";
+import { useGetImportById } from "@/lib/actions/import/react-quert/import-query";
+interface IMaterial {
+  id: string;
+  materialId: string;
+  materialCode: string | null;
+  materialName: string;
+  materialImage: string;
+  variantId: string | null;
+  variantName: string | null;
+  variantImage: string | null;
+  quantity: number;
+  materialPrice: number;
+  variantPrice: number;
+  lastUpdateTime: string;
+  discount: number;
+  note: string;
+}
 
-export default function CreateImport() {
+export default function UpdateImport() {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const { id } = useParams();
   const router = useRouter();
   const {
     materials,
@@ -102,16 +123,6 @@ export default function CreateImport() {
     setState(newDiscount);
   };
 
-  // const handleInputChangeNumber = (
-  //   e: React.ChangeEvent<HTMLInputElement>,
-  //   setState: React.Dispatch<React.SetStateAction<number>>
-  // ) => {
-  //   // Lấy giá trị thô và loại bỏ các ký tự không phải số
-  //   const rawValue = e.target.value.replace(/[^0-9]/g, "");
-
-  //   // Cập nhật state với giá trị số nguyên
-  //   setState(Number(rawValue));
-  // };
   const now = new Date();
   const formattedDate = now.toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -130,6 +141,36 @@ export default function CreateImport() {
     page: 1,
     itemPerPage: 10,
   });
+  const { data: importDetail, isLoading: isLoadingImportDetail } =
+    useGetImportById(id.toString());
+
+  const addImportDetails = (importDetails: IImportDetail[]) => {
+    importDetails.forEach((detail) => {
+      const newMaterial: IMaterial = {
+        id: detail.materialId, // Assuming materialId is unique
+        materialId: detail.materialId,
+        materialCode: detail.materialCode,
+        materialName: detail.name,
+        materialImage: "", // You may want to set this based on your data
+        variantId: detail.variantId,
+        variantName: "", // You may want to set this based on your data
+        variantImage: "", // You may want to set this based on your data
+        quantity: detail.quantity,
+        materialPrice: detail.unitPrice,
+        variantPrice: detail.unitImportPrice,
+        lastUpdateTime: new Date().toISOString(), // Set current time or based on your data
+        discount: detail.unitDiscount,
+        note: detail.note,
+      };
+      addList(newMaterial);
+    });
+  };
+
+  useEffect(() => {
+    if (importDetail && Array.isArray(importDetail.data?.importDetails)) {
+      addImportDetails(importDetail.data.importDetails);
+    }
+  }, [importDetail]);
 
   useEffect(() => {
     setSearchParams((prev) => ({
@@ -174,7 +215,7 @@ export default function CreateImport() {
     note: item.note,
   }));
 
-  const handleOnSumit = async (isCompleted: boolean) => {
+  const handleOnSumit = async () => {
     if (where === "store" && !selectedStore.id) {
       toast({
         title: "Lỗi",
@@ -202,20 +243,21 @@ export default function CreateImport() {
     }
 
     const Data = {
+      importId: importDetail?.data?.id,
       supplierId: supId,
       quantity: totals.totalQuantity,
       totalPrice: totals.totalPrice,
       totalDiscount: discount,
       storeId: selectedStore.id,
       note: note,
-      isCompleted: isCompleted,
+      status: "",
       timeStamp: now,
       totalDue: totals.totalPrice - discount,
       importDetails: importDetails,
     };
     setLoading(true);
     try {
-      const response = await CreateImportAction(Data);
+      const response = await UpdateImportAction(Data);
       if (response.success) {
         toast({
           title: "Thành công.",
@@ -651,32 +693,22 @@ export default function CreateImport() {
               </div>
             </div>
             <div className="flex justify-center">
-              <div className="grid grid-cols-2 grid-rows-1 gap-4">
-                <div>
+              <div>
+                {loading ? (
                   <Button
-                    onClick={() => handleOnSumit(false)}
-                    className="w-full py-10 bg-blue-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-blue-600"
+                    disabled
+                    className="w-full py-10 2xl:text-2xl text-xl mb-5 font-bold"
                   >
-                    <FaSave /> Tạm lưu
+                    <Loader2 /> Đang xử lý
                   </Button>
-                </div>
-                <div>
-                  {loading ? (
-                    <Button
-                      disabled
-                      className="w-full py-10 2xl:text-2xl text-xl mb-5 font-bold"
-                    >
-                      <Loader2 /> Đang xử lý
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => handleOnSumit(true)}
-                      className="w-full py-10 bg-green-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
-                    >
-                      <MdOutlineDownloadDone /> Hoàn thành
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <Button
+                    onClick={() => handleOnSumit()}
+                    className="w-full py-10 bg-green-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
+                  >
+                    <MdOutlineDownloadDone /> Hoàn thành
+                  </Button>
+                )}
               </div>
             </div>
           </div>

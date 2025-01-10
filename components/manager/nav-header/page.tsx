@@ -117,6 +117,12 @@ export default function NavHeader() {
                   >
                     {role === "Senior_Management" ? (
                       <div>
+                        <Link href="/import">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Nhập hàng
+                          </div>
+                        </Link>
                         <Link href="/admin-request">
                           <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                             <FaBoxArchive className="mr-2 size-4" />
@@ -138,12 +144,7 @@ export default function NavHeader() {
                             Gửi yêu cầu
                           </div>
                         </Link>
-                        <Link href="/import">
-                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                            <FaBoxArchive className="mr-2 size-4" />
-                            Nhập hàng
-                          </div>
-                        </Link>
+
                         <Link href="/notes">
                           <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
                             <FaBoxArchive className="mr-2 size-4" />
