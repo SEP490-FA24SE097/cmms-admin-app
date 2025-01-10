@@ -59,9 +59,26 @@ import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useToast } from "@/hooks/use-toast";
 import {
   CancelRequest,
+  ConfirmRequest,
   CreateRequest,
 } from "@/lib/actions/request/action/request-action";
 import { useQueryClient } from "@tanstack/react-query";
+
+const getStatusDetails = (status: string) => {
+  switch (status) {
+    case "Processing":
+      return { label: "Đang xử lý", color: "orange" };
+    case "Canceled":
+      return { label: "Đã hủy", color: "red" };
+    case "Approved":
+      return { label: "Đã phê duyệt", color: "green" };
+    case "Confirmed":
+      return { label: "Đã xác nhận", color: "blue" };
+    default:
+      return { label: "Không xác định", color: "gray" };
+  }
+};
+
 export default function ListRequestStore() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -160,9 +177,8 @@ export default function ListRequestStore() {
     }
   };
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
-  const [isLoadingCreate1, setIsLoadingCreate1] = useState(false);
   const [open, setOpen] = useState(false);
-  const [open1, setOpen1] = useState(false);
+
   const handleSubmit = async () => {
     if (!selectedMaterial) {
       toast({
@@ -228,7 +244,6 @@ export default function ListRequestStore() {
     const data = { requestId };
 
     try {
-      setIsLoadingCreate1(true);
       const response = await CancelRequest(data);
       if (response.success) {
         toast({
@@ -238,7 +253,6 @@ export default function ListRequestStore() {
             color: "white",
           },
         });
-        setOpen1(false);
         queryClient.invalidateQueries({
           queryKey: ["Request_STORE_LIST", searchParams],
         });
@@ -258,10 +272,54 @@ export default function ListRequestStore() {
         variant: "destructive",
       });
     } finally {
-      setIsLoadingCreate1(false);
     }
   };
+  const handleConfirm = async (requestId: string | null | undefined) => {
+    if (!requestId) {
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy mã yêu cầu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    const data = {
+      requestId: requestId,
+      isConfirmed: true,
+    };
+
+    try {
+      const response = await ConfirmRequest(data);
+      if (response.success) {
+        toast({
+          title: "Xác nhận thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["Request_STORE_LIST", searchParams],
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description:
+            response.error || "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+    }
+  };
   return (
     <div className="w-[80%] mx-auto mt-5">
       <div className="flex justify-between gap-4">
@@ -508,51 +566,81 @@ export default function ListRequestStore() {
                 <TableHead className="w-[100px]">Mã</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Tên sản phẩm</TableHead>
+                <TableHead className="text-right">Số lượng</TableHead>
                 <TableHead className="text-right">Ngày gửi</TableHead>
                 <TableHead className="text-right">Hủy</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {request?.data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">
-                    {item.requestCode}
-                  </TableCell>
-                  <TableCell className="underline">{item.status}</TableCell>
-                  <TableCell>{item.variant || item.material}</TableCell>
-                  <TableCell className="text-right">
-                    {formatDateTime(item.lastUpdateTime)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {item.status === "Confirmed" ||
-                    item.status === "Canceled" ? (
-                      ""
-                    ) : (
-                      <AlertDialog open={open1} onOpenChange={setOpen1}>
-                        <AlertDialogTrigger>
-                          <Button variant="destructive">Hủy</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Bạn có chắc chắc muốn xóa?
-                            </AlertDialogTitle>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleCancel(item.id)}
-                              className="bg-red-500"
-                            >
-                              Xóa
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {request?.data.map((item) => {
+                const { label, color } = getStatusDetails(item.status);
+
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      {item.requestCode}
+                    </TableCell>
+                    <TableCell style={{ color }}>{label}</TableCell>
+                    <TableCell>{item.variant || item.material}</TableCell>
+                    <TableCell className="text-right">
+                      {item.quantity.toLocaleString("vi-VN")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatDateTime(item.lastUpdateTime)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.status === "Processing" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger>
+                            <Button variant="destructive">Hủy</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắc muốn xóa?
+                              </AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleCancel(item.id)}
+                                className="bg-red-500"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                      {item.status === "Approved" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button className="bg-green-500 hover:bg-green-600 text-white">
+                              Xác nhận
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắc muốn xác nhận?
+                              </AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleConfirm(item.id)}
+                                className="bg-green-500"
+                              >
+                                Xác nhận
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 

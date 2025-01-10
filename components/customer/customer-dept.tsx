@@ -21,25 +21,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ITransaction } from "@/lib/actions/customer/type/customer";
-const receiptData = {
-  receiptCode: "TTHD000044",
-  staffName: "phuc van phan",
-  dateTime: "31/12/2024 16:44",
-  paymentMethod: "Tiền mặt",
-  customer: "Anh Giang - Kim Mã",
-  createdBy: "phuc van phan",
-  invoices: [
-    {
-      code: "HD000044",
-      time: "31/12/2024 16:43",
-      totalValue: "4,943,200",
-      preCollected: "0",
-      collected: "4,943,200",
-      status: "Đã thanh toán",
-    },
-  ],
-  totalCollected: "4,943,200",
-};
+
 export default function CustomerDept({ customerId }: any) {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedTransaction, setSelectedTransaction] =

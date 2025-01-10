@@ -59,12 +59,26 @@ import { useSession } from "next-auth/react";
 import { useGetRequestStore } from "@/lib/actions/request/query-action/request-quert";
 import { Material } from "@/lib/actions/material-store/type/material-store";
 import { useToast } from "@/hooks/use-toast";
-import {
-  SubmitRequest,
-} from "@/lib/actions/request/action/request-action";
+import { SubmitRequest } from "@/lib/actions/request/action/request-action";
 import { useQueryClient } from "@tanstack/react-query";
 import { IRequest } from "@/lib/actions/request/type/request";
 import { useGetStore } from "@/lib/actions/store/react-query/store-query";
+
+const getStatusDetails = (status: string) => {
+  switch (status) {
+    case "Processing":
+      return { label: "Đang xử lý", color: "orange" };
+    case "Canceled":
+      return { label: "Đã hủy", color: "red" };
+    case "Approved":
+      return { label: "Đã phê duyệt", color: "green" };
+    case "Confirmed":
+      return { label: "Đã xác nhận", color: "blue" };
+    default:
+      return { label: "Không xác định", color: "gray" };
+  }
+};
+
 export default function ListRequestAdmin() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -367,136 +381,143 @@ export default function ListRequestAdmin() {
                 <TableHead>Tên sản phẩm</TableHead>
                 <TableHead>Chi nhánh</TableHead>
                 <TableHead className="text-right">Ngày gửi</TableHead>
+                <TableHead className="text-right">SL</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {request?.data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">
-                    {item.requestCode}
-                  </TableCell>
-                  <TableCell className="underline">{item.status}</TableCell>
-                  <TableCell>{item.variant || item.material}</TableCell>
-                  <TableCell>{item.store}</TableCell>
-                  <TableCell className="text-right">
-                    {formatDateTime(item.lastUpdateTime)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {item.status !== "Processing" ? (
-                      ""
-                    ) : (
-                      <div className="flex gap-2">
-                        <AlertDialog open={open} onOpenChange={setOpen}>
-                          <AlertDialogTrigger>
-                            <Button
-                              onClick={() => handleSelectRequest(item)}
-                              className="bg-green-500 text-white hover:bg-green-600"
-                            >
-                              Chấp nhận
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                <div className="space-y-5">
-                                  <div className="flex justify-between items-center gap-5">
-                                    <h1>Nhập hàng cho: </h1>
-                                    <Select
-                                      onValueChange={handleValueChangeWhre}
-                                      value={where}
-                                    >
-                                      <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Nhập tại" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectGroup>
-                                          <SelectItem value="kho">
-                                            Kho tổng
-                                          </SelectItem>
-                                          <SelectItem value="store">
-                                            Cửa hàng
-                                          </SelectItem>
-                                        </SelectGroup>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {where === "store" && (
+              {request?.data.map((item) => {
+                const { label, color } = getStatusDetails(item.status);
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      {item.requestCode}
+                    </TableCell>
+                    <TableCell style={{ color }}>{label}</TableCell>
+                    <TableCell>{item.variant || item.material}</TableCell>
+                    <TableCell>{item.store}</TableCell>
+                    <TableCell className="text-right">
+                      {formatDateTime(item.lastUpdateTime)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.quantity}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.status !== "Processing" ? (
+                        ""
+                      ) : (
+                        <div className="flex gap-2 justify-end">
+                          <AlertDialog open={open} onOpenChange={setOpen}>
+                            <AlertDialogTrigger>
+                              <Button
+                                onClick={() => handleSelectRequest(item)}
+                                className="bg-green-500 text-white hover:bg-green-600"
+                              >
+                                Chấp nhận
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  <div className="space-y-5">
                                     <div className="flex justify-between items-center gap-5">
-                                      <h1>Cửa hàng: </h1>
+                                      <h1>Nhập hàng cho: </h1>
                                       <Select
-                                        onValueChange={handleStoreChange}
-                                        value={selectedStore.id}
+                                        onValueChange={handleValueChangeWhre}
+                                        value={where}
                                       >
                                         <SelectTrigger className="w-[180px]">
-                                          <SelectValue placeholder="Cửa hàng">
-                                            {filteredStores === null
-                                              ? "Đang tải..."
-                                              : selectedStore.name ||
-                                                "Chọn cửa hàng"}
-                                          </SelectValue>
+                                          <SelectValue placeholder="Nhập tại" />
                                         </SelectTrigger>
                                         <SelectContent>
                                           <SelectGroup>
-                                            {filteredStores?.map((item) => (
-                                              <SelectItem
-                                                key={item.id}
-                                                value={item.id}
-                                              >
-                                                {item.name}
-                                              </SelectItem>
-                                            ))}
+                                            <SelectItem value="kho">
+                                              Kho tổng
+                                            </SelectItem>
+                                            <SelectItem value="store">
+                                              Cửa hàng
+                                            </SelectItem>
                                           </SelectGroup>
                                         </SelectContent>
                                       </Select>
                                     </div>
-                                  )}
-                                </div>
-                              </AlertDialogTitle>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleSubmit()}
-                                className="bg-blue-500"
-                              >
-                                Cập nhật
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                    {where === "store" && (
+                                      <div className="flex justify-between items-center gap-5">
+                                        <h1>Cửa hàng: </h1>
+                                        <Select
+                                          onValueChange={handleStoreChange}
+                                          value={selectedStore.id}
+                                        >
+                                          <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Cửa hàng">
+                                              {filteredStores === null
+                                                ? "Đang tải..."
+                                                : selectedStore.name ||
+                                                  "Chọn cửa hàng"}
+                                            </SelectValue>
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectGroup>
+                                              {filteredStores?.map((item) => (
+                                                <SelectItem
+                                                  key={item.id}
+                                                  value={item.id}
+                                                >
+                                                  {item.name}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectGroup>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+                                  </div>
+                                </AlertDialogTitle>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleSubmit()}
+                                  className="bg-blue-500"
+                                >
+                                  Cập nhật
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
 
-                        <AlertDialog open={open1} onOpenChange={setOpen1}>
-                          <AlertDialogTrigger>
-                            <Button
-                              onClick={() => handleSelectRequest(item)}
-                              variant="destructive"
-                            >
-                              Hủy
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Bạn có chắc chắc muốn xóa?
-                              </AlertDialogTitle>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleCancel()}
-                                className="bg-red-500"
+                          <AlertDialog open={open1} onOpenChange={setOpen1}>
+                            <AlertDialogTrigger>
+                              <Button
+                                onClick={() => handleSelectRequest(item)}
+                                variant="destructive"
                               >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                                Hủy
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Bạn có chắc chắc muốn xóa?
+                                </AlertDialogTitle>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleCancel()}
+                                  className="bg-red-500"
+                                >
+                                  Xóa
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 
