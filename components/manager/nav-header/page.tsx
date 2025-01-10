@@ -1,4 +1,5 @@
 "use client";
+import { useRole } from "@/providers/role-context";
 import Link from "next/link";
 import * as React from "react";
 import {
@@ -19,6 +20,8 @@ export default function NavHeader() {
     about: false,
     contact: false,
   });
+  const { role } = useRole();
+
   const handleMouseEnter = (menu: string) => {
     setDropdownOpen((prev) => ({ ...prev, [menu]: true }));
   };
@@ -55,14 +58,41 @@ export default function NavHeader() {
                     onMouseEnter={() => handleMouseEnter("material")}
                     onMouseLeave={() => handleMouseLeave("material")}
                   >
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <RiGridLine className="mr-2 size-4" />
-                      Danh mục
-                    </div>
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaClipboardCheck className="mr-2 size-4" />
-                      Kiểm kho
-                    </div>
+                    {role === "Senior_Management" ? (
+                      <div>
+                        <Link
+                          href="/manage/materials"
+                          className="px-4 py-2 text-white hover:bg-blue-700 flex items-center"
+                        >
+                          <RiGridLine className="mr-2 size-4" />
+                          Danh mục
+                        </Link>
+                        <Link
+                          href="/manage/materials/update-material"
+                          className="px-4 py-2 text-white hover:bg-blue-700 flex items-center"
+                        >
+                          <FaClipboardCheck className="mr-2 size-4" />
+                          Cập nhật
+                        </Link>
+                      </div>
+                    ) : (
+                      <div>
+                        <Link
+                          href="/store-material"
+                          className="px-4 py-2 text-white hover:bg-blue-700 flex items-center"
+                        >
+                          <RiGridLine className="mr-2 size-4" />
+                          Danh mục
+                        </Link>
+                        <Link
+                          href="/order-pending"
+                          className="px-4 py-2 text-white hover:bg-blue-700 flex items-center"
+                        >
+                          <RiGridLine className="mr-2 size-4" />
+                          Đơn hàng chờ
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -85,111 +115,84 @@ export default function NavHeader() {
                     onMouseEnter={() => handleMouseEnter("transaction")}
                     onMouseLeave={() => handleMouseLeave("transaction")}
                   >
-                    <Link href="/store-request">
-                      <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                        <FaBoxArchive className="mr-2 size-4" />
-                        Gửi yêu cầu
+                    {role === "Senior_Management" ? (
+                      <div>
+                        <Link href="/admin-request">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Xử lý yêu cầu
+                          </div>
+                        </Link>
+                        <Link href="/notes">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Ghi chú xuất nhập
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
-                    <Link href="/import">
-                      <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                        <FaBoxArchive className="mr-2 size-4" />
-                        Nhập hàng
+                    ) : (
+                      <div>
+                        <Link href="/store-request">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Gửi yêu cầu
+                          </div>
+                        </Link>
+                        <Link href="/import">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Nhập hàng
+                          </div>
+                        </Link>
+                        <Link href="/notes">
+                          <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                            <FaBoxArchive className="mr-2 size-4" />
+                            Ghi chú xuất nhập
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
+                    )}
                   </div>
                 )}
               </div>
 
               {/* customer */}
               <div className="relative">
-                <button
-                  onMouseEnter={() => handleMouseEnter("customer")}
-                  onMouseLeave={() => handleMouseLeave("customer")}
-                  className={`text-white hover:bg-blue-700  px-8 py-3 text-sm font-medium flex  justify-between items-center ${
-                    dropdownOpen.customer ? "bg-blue-700" : ""
-                  }`}
-                >
-                  <FaBoxArchive className="mr-2 size-4" />
-                  Khách hàng
-                </button>
-                {dropdownOpen.customer && (
-                  <div
-                    className="absolute bg-blue-500 shadow-lg w-60 z-10"
-                    onMouseEnter={() => handleMouseEnter("customer")}
-                    onMouseLeave={() => handleMouseLeave("customer")}
+                <Link href="/customer">
+                  <button
+                    className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
                   >
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaBoxArchive className="mr-2 size-4" />
-                      Danh mục
-                    </div>
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaBoxArchive className="mr-2 size-4" />
-                      Kiểm kho
-                    </div>
-                  </div>
-                )}
+                    <FaBoxArchive className="mr-2 size-4" />
+                    Khách hàng
+                  </button>
+                </Link>
               </div>
 
               {/* supplier */}
               <div className="relative">
-                <button
-                  onMouseEnter={() => handleMouseEnter("supplier")}
-                  onMouseLeave={() => handleMouseLeave("supplier")}
-                  className={`text-white hover:bg-blue-700  px-8 py-3 text-sm font-medium flex  justify-between items-center ${
-                    dropdownOpen.supplier ? "bg-blue-700" : ""
-                  }`}
-                >
-                  <FaBoxArchive className="mr-2 size-4" />
-                  Nhà cung cấp
-                </button>
-                {dropdownOpen.supplier && (
-                  <div
-                    className="absolute bg-blue-500 shadow-lg w-48 z-10"
-                    onMouseEnter={() => handleMouseEnter("supplier")}
-                    onMouseLeave={() => handleMouseLeave("supplier")}
-                  >
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+                {role === "Senior_Management" && (
+                  <Link href="/manage/supplier">
+                    <button
+                      className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
+                    >
                       <FaBoxArchive className="mr-2 size-4" />
-                      Danh mục
-                    </div>
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaBoxArchive className="mr-2 size-4" />
-                      Kiểm kho
-                    </div>
-                  </div>
+                      Nhà cung cấp
+                    </button>
+                  </Link>
                 )}
               </div>
-
-              {/* Materials */}
-              <div className="relative">
-                <button
-                  onMouseEnter={() => handleMouseEnter("services")}
-                  onMouseLeave={() => handleMouseLeave("services")}
-                  className={`text-white hover:bg-blue-700  px-8 py-3 text-sm font-medium flex  justify-between items-center ${
-                    dropdownOpen.services ? "bg-blue-700" : ""
-                  }`}
-                >
-                  <FaBoxArchive className="mr-2 size-4" />
-                  Nhân viên
-                </button>
-                {dropdownOpen.services && (
-                  <div
-                    className="absolute bg-blue-500 shadow-lg w-48 z-10"
-                    onMouseEnter={() => handleMouseEnter("services")}
-                    onMouseLeave={() => handleMouseLeave("services")}
-                  >
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
+              {["Senior_Management", "Store_Manager"].includes(role) && (
+                <div className="relative">
+                  <Link href="/manage/staff">
+                    <button
+                      className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
+                    >
                       <FaBoxArchive className="mr-2 size-4" />
-                      Danh mục
-                    </div>
-                    <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                      <FaBoxArchive className="mr-2 size-4" />
-                      Kiểm kho
-                    </div>
-                  </div>
-                )}
-              </div>
+                      Nhân viên
+                    </button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

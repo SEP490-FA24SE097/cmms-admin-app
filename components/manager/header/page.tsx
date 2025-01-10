@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
-import { IoIosOptions, IoMdSettings } from "react-icons/io";
+import { FaUserCircle } from "react-icons/fa";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,49 +30,27 @@ export default function ManagerHeader() {
     <div className="bg-white">
       <div className="flex justify-between w-[80%] mx-auto">
         <div className="px-3 py-3 text-2xl font-bold text-blue-700">CMMS</div>
-        <div className="">
-          <div className="bg-blue-600 items-center flex">
-            <div
-              onMouseEnter={() => handleMouseEnter("settings")}
-              onMouseLeave={() => handleMouseLeave("settings")}
-              className={`relative flex px-3 py-4  ${
-                dropdownOpen.settings ? "bg-blue-700" : ""
-              }`}
-            >
-              <IoMdSettings className="size-4" />
-              {dropdownOpen.settings && (
-                <div
-                  className="absolute bg-white shadow-lg w-60 z-9 right-0 top-full"
-                  onMouseEnter={() => handleMouseEnter("settings")}
-                  onMouseLeave={() => handleMouseLeave("settings")}
+        <div className="flex items-center">
+          <div className="flex items-center hover:bg-slate-200 px-2 rounded-lg text-black font-bold">
+            <h1>{session?.user.user.phoneNumber}</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="hover:bg-slate-200 hover:border-none"
                 >
-                  <div className="px-4 py-2 text-black hover:bg-gray-100 flex items-center">
-                    Quản lí người dùng
-                  </div>
-                  <div className="px-4 py-2 text-black hover:bg-gray-100  flex items-center">
-                    Quản lí chi nhánh
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center">
-              <h1 className="text-white">{session?.user.user.phoneNumber}</h1>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="hover:bg-blue-900">
-                    <IoIosOptions className="text-white" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Billing</DropdownMenuItem>
-                  <DropdownMenuItem>Team</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  <FaUserCircle size={25} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem>Team</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

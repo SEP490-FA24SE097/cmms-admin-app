@@ -2,8 +2,14 @@
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 
-import { ApiListResponse, fetchListData } from "@/lib/api/api-handler/generic";
+import {
+  ApiListResponse,
+  Result,
+  apiRequest,
+  fetchListData,
+} from "@/lib/api/api-handler/generic";
 import { ISupplier } from "../type/supplier-type";
+import { axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
 export async function getSuppliers(): Promise<ApiListResponse<ISupplier>> {
@@ -16,4 +22,15 @@ export async function getSuppliers(): Promise<ApiListResponse<ISupplier>> {
   }
 
   return result.data;
+}
+
+export async function createSupplier<T>(data: any): Promise<Result<void>> {
+  noStore();
+  const result = await apiRequest(() => axiosAuth.post("/suppliers", data));
+  console.log(result);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
 }

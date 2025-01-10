@@ -50,6 +50,7 @@ import {
 } from "@/lib/actions/customer/action/customer-action";
 import { useGetStore } from "@/lib/actions/store/react-query/store-query";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRole } from "@/providers/role-context";
 
 type Location = {
   value: string;
@@ -57,6 +58,7 @@ type Location = {
 };
 export default function AddStaff() {
   const { toast } = useToast();
+  const { role } = useRole();
   const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
@@ -263,7 +265,6 @@ export default function AddStaff() {
   const handleRoleChange = (value: any) => {
     setStaffRole(value);
   };
-  console.log(staffRole);
   return (
     <div>
       <HoverCard openDelay={100} closeDelay={200}>
@@ -285,7 +286,9 @@ export default function AddStaff() {
                     <SelectValue placeholder="Chọn nhân viên" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2">Quản lý</SelectItem>
+                    {role === "Senior_Management" && (
+                      <SelectItem value="2">Quản lý</SelectItem>
+                    )}
                     <SelectItem value="3">Bán hàng</SelectItem>
                     <SelectItem value="6">Vận chuyển</SelectItem>
                   </SelectContent>

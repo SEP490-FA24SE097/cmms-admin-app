@@ -74,18 +74,16 @@ export default function LoginPage() {
           }
         }
 
-        if (userRole === "Senior_Management") {
-          router.push("/manage/dashboard");
-        }
-        if (userRole === "Sale_Staff" || userRole === "Store_Manager") {
-          router.push("/home");
-        }
-        if (userRole === "Shipper_Store") {
-          router.push("/shipper");
-        } else {
-          router.push("/home");
-        }
-        // router.push("/home");
+        const roleRoutes: Record<string, string> = {
+          Senior_Management: "/manage/materials",
+          Store_Manager: "/store-material",
+          Sale_Staff: "/home",
+          Shipper_Store: "/shipper",
+        };
+
+        const route = roleRoutes[userRole] || "/unauthorized";
+        router.push(route);
+
         toast({
           title: "Đăng nhập thành công",
           description: "Bạn đã đăng nhập thành công!",

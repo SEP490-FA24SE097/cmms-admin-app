@@ -89,10 +89,7 @@ export default function ListNotes() {
     );
     setSelectSuplier(selectedStoreObject || { id: "", name: "" });
   };
-  const handleChangeQuantity = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(0, Number(event.target.value));
-    setQuantityInReality(value);
-  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return "";
     const day = date.getDate().toString().padStart(2, "0");
@@ -124,6 +121,7 @@ export default function ListNotes() {
   const [searchParams, setSearchParams] = useState({
     page: currentPage,
     itemPerPage: 10,
+    storeId: StoreId,
   });
 
   useEffect(() => {
@@ -142,58 +140,7 @@ export default function ListNotes() {
       setCurrentPage(page);
     }
   };
-  const handleUpdateStock = async (quantitySystem: number) => {
-    if (!quantityInReality) {
-      toast({
-        title: "Lỗi",
-        description: "Không được để trống.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const data = {
-      storeId: StoreId || null,
-      materialId: selectMaterialId,
-      quantityInSystem: quantitySystem,
-      quantityInReality: quantityInReality,
-      ...(selectVariantId && { variantId: selectVariantId }),
-    };
 
-    setLoadingS(true);
-
-    try {
-      const result = await UpdateTracking(data);
-      if (result.success) {
-        toast({
-          title: "Thành công",
-          description: "Cập nhật định mức thành công.",
-          style: {
-            backgroundColor: "green",
-            color: "white",
-          },
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: ["NOTE_LIST"],
-        });
-        setOpenS(false);
-      } else {
-        toast({
-          title: "Lỗi",
-          description: result.error || "Có lỗi xảy ra khi cập nhật định mức.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi kết nối đến server.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingS(false);
-    }
-  };
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
@@ -369,26 +316,22 @@ export default function ListNotes() {
                       <h1 className="my-2 font-bold text-xl">
                         Thông tin chi tiết
                       </h1>
-                      <div className="grid grid-cols-2 grid-rows-1 p-2 gap-4">
-                        <div className="flex gap-2 border-b pb-2">
-                          <h1 className="font-bold">Mã phiếu</h1>
-                          <h1>{item.noteCode}</h1>
-                        </div>
-                        <div className="flex gap-2 border-b pb-2">
-                          <h1 className="font-bold">Mô tả:</h1>
-                          <h1>{item.reasonDescription}</h1>
-                        </div>
+                      <div className="flex gap-2">
+                        <h1 className="font-bold">Mã phiếu</h1>
+                        <h1 className="border-b">{item.noteCode}</h1>
                       </div>
-                      <div>
+                      <div className="flex gap-2 pt-2">
+                        <h1 className="font-bold">Mô tả:</h1>
+                        <h1 className="border-b">{item.reasonDescription}</h1>
+                      </div>
+
+                      <div className="pt-5">
                         <Table className="border">
                           <TableHeader className="bg-blue-200">
                             <TableRow>
                               <TableHead className="w-[100px]">STT</TableHead>
                               <TableHead>Loại phiếu</TableHead>
                               <TableHead>Tên</TableHead>
-                              <TableHead className="text-right">
-                                Số lượng
-                              </TableHead>
                               <TableHead className="text-right">
                                 Số lượng
                               </TableHead>
@@ -406,77 +349,6 @@ export default function ListNotes() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {detail.quantity.toLocaleString("vi-VN")}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <AlertDialog
-                                    open={openS}
-                                    onOpenChange={setOpenS}
-                                  >
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                          setSelectMaterialId(
-                                            detail.materialId
-                                          );
-                                          setSelectVariantId(
-                                            detail.variantId || ""
-                                          );
-                                        }}
-                                        className="text-blue-500 hover:text-blue-600"
-                                      >
-                                        <GiConfirmed size={25} />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Cập nhật định mức
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription className="space-y-5">
-                                          <div className="flex gap-2 text-black items-center">
-                                            <h1 className="w-40 font-bold">
-                                              Số lượng trên hệ thống:
-                                            </h1>
-                                            <Input
-                                              type=""
-                                              readOnly
-                                              value={detail.quantity ?? ""}
-                                            />
-                                          </div>
-                                          <div className="flex gap-2 text-black items-center">
-                                            <h1 className="w-40 font-bold">
-                                              Số lượng nhận thực tế:
-                                            </h1>
-                                            <Input
-                                              type="number"
-                                              placeholder="Nhập định mức tối đa"
-                                              value={quantityInReality ?? ""} // Use an empty string if discount is undefined
-                                              onChange={handleChangeQuantity}
-                                            />
-                                          </div>
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Hủy
-                                        </AlertDialogCancel>
-                                        {loadingS ? (
-                                          <Button>
-                                            <Loader2 /> Đang xử lý...
-                                          </Button>
-                                        ) : (
-                                          <Button
-                                            onClick={() =>
-                                              handleUpdateStock(detail.quantity)
-                                            }
-                                          >
-                                            Xác nhận
-                                          </Button>
-                                        )}
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
                                 </TableCell>
                               </TableRow>
                             ))}

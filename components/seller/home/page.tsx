@@ -474,7 +474,7 @@ export default function SellerHome() {
                           {product.variantName || product.materialName}
                         </div>
                         <div className="text-blue-600 font-bold">
-                          {product.materialPrice.toLocaleString("vi-VN", {
+                          {product.materialPrice?.toLocaleString("vi-VN", {
                             style: "currency",
                             currency: "vnd",
                           })}

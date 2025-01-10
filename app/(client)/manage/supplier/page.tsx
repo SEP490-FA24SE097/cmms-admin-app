@@ -1,7 +1,8 @@
 "use client";
 import ManagerHeader from "@/components/manager/header/page";
 import NavHeader from "@/components/manager/nav-header/page";
-import ListRequestAdmin from "@/components/request/admin/list-request";
+import SupllierList from "@/components/manager/supplier/list-supplier";
+
 import { useRole } from "@/providers/role-context";
 import { useSession } from "next-auth/react";
 import { useRouter } from "nextjs-toploader/app";
@@ -46,20 +47,22 @@ export default function StoreRequestPage() {
   }
 
   if (!isAuthorized) {
-    return (<div className="min-h-screen flex items-center justify-center">
-      <iframe
-        src="https://lottie.host/embed/b0b83ef8-03a3-4720-9a47-4333a87e71c2/4S8Zw18Nxp.lottie"
-        className="w-48 h-48"
-        title="Loading Animation"
-      ></iframe>
-    </div>); 
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <iframe
+          src="https://lottie.host/embed/b0b83ef8-03a3-4720-9a47-4333a87e71c2/4S8Zw18Nxp.lottie"
+          className="w-48 h-48"
+          title="Loading Animation"
+        ></iframe>
+      </div>
+    );
   }
 
   return (
     <div className="bg-slate-200 min-h-screen pb-5">
       <ManagerHeader />
       <NavHeader />
-      <ListRequestAdmin />
+      <SupllierList />
     </div>
   );
 }
