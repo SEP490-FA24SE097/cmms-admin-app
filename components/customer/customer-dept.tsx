@@ -185,15 +185,27 @@ export default function CustomerDept({ customerId }: any) {
                               </tbody>
                             </table>
                           </div>
-                          <div className="flex justify-end mt-4">
-                            <p className="font-semibold">
-                              Tổng tiền thu:{" "}
-                              <span className="text-black">
-                                {item.invoiceVM.salePrice.toLocaleString(
-                                  "vi-VN"
-                                )}
-                              </span>
-                            </p>
+                          <div className="flex justify-between mt-4">
+                            <div>
+                              <p className="font-semibold">
+                                Phí vận chuyển:{" "}
+                                <span className="text-black">
+                                  {item.invoiceVM.shippingDetailVM?.shippingFee.toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </span>
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">
+                                Tổng tiền thu:{" "}
+                                <span className="text-black">
+                                  {item.invoiceVM.salePrice.toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                </span>
+                              </p>
+                            </div>
                           </div>
                         </DialogDescription>
                       </DialogHeader>

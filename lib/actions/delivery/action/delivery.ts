@@ -23,7 +23,7 @@ export async function getShipping(
     "/shippingDetails/getShippingDetails",
     searchParams
   );
-  console.log(result);
+  console.log(searchParams);
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }

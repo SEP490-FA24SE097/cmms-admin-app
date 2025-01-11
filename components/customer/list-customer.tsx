@@ -46,7 +46,7 @@ import { IoTrashBin } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllCustomer } from "@/lib/actions/customer/react-query/customer-query";
 import CustomerDept from "./customer-dept";
 import UpdateCustomer from "./update-customer";
@@ -65,9 +65,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import CreateCustomer from "../seller/add-customer/page";
+import { useSession } from "next-auth/react";
 
 export default function CustomerList() {
   const { toast } = useToast();
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
@@ -106,7 +108,7 @@ export default function CustomerList() {
   };
 
   const [currentPage, setCurrentPage] = useState(0);
-
+  const StoreId = session?.user.user.storeId || null;
   const [searchParams, setSearchParams] = useState({
     "defaultSearch.currentPage": currentPage,
     "defaultSearch.perPage": 10,
@@ -116,9 +118,9 @@ export default function CustomerList() {
     setSearchParams((prev) => ({
       ...prev,
       "defaultSearch.currentPage": currentPage,
-      supplierId: selectedSupplier.id,
+      StoreId: StoreId,
     }));
-  }, [selectedSupplier.id, currentPage]);
+  }, [StoreId, currentPage]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: customers, isLoading: isLoadingCustomer } =
@@ -354,6 +356,12 @@ export default function CustomerList() {
                 {customers?.data?.totalSaleAfterRefund.toLocaleString("vi-VN")}
               </div>
             </div>
+            {isLoadingCustomer && (
+              <div className=" mt-2 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full " />
+              </div>
+            )}
             {customers?.data?.result.map((item, index) => (
               <Accordion type="single" collapsible key={item.id}>
                 <AccordionItem value={`item-${index}`}>
@@ -510,7 +518,7 @@ export default function CustomerList() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                            <AlertDialog>
+                            {/* <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive">
                                   <IoTrashBin /> Xóa
@@ -534,7 +542,7 @@ export default function CustomerList() {
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
-                            </AlertDialog>
+                            </AlertDialog> */}
                           </div>
                         </TabsContent>
                         <TabsContent value="dept">

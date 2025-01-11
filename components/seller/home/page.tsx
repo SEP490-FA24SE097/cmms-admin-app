@@ -94,8 +94,6 @@ export default function SellerHome() {
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetCustomer(searchCusParams);
 
-  console.log(customers);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -461,6 +459,10 @@ export default function SellerHome() {
                           ...product,
                           number: 0,
                           variantPrice: product.variantPrice ?? 0,
+                          materialPrice:
+                            product.afterDiscountPrice ||
+                            product.variantPrice ||
+                            product.materialPrice,
                         })
                       }
                     >
@@ -476,7 +478,11 @@ export default function SellerHome() {
                           {product.variantName || product.materialName}
                         </div>
                         <div className="text-blue-600 font-bold">
-                          {product.materialPrice?.toLocaleString("vi-VN", {
+                          {(
+                            product.afterDiscountPrice ||
+                            product.variantPrice ||
+                            product.materialPrice
+                          )?.toLocaleString("vi-VN", {
                             style: "currency",
                             currency: "vnd",
                           })}

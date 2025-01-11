@@ -19,7 +19,7 @@ export default function ShipperPage() {
     // Redirect to /auth for invalid roles
   }, [session, router]);
   return (
-    <div className="min-h-screen pb-5">
+    <div className="min-h-screen pb-5 bg-slate-100">
       <ManagerHeader />
       <NavHeader />
       <OrderPage />

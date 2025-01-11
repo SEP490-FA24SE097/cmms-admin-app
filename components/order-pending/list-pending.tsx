@@ -2,7 +2,19 @@
 import { Button } from "@/components/ui/button";
 import { FaPlus } from "react-icons/fa";
 import { Calendar } from "@/components/ui/calendar";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import {
   Pagination,
   PaginationContent,
@@ -17,6 +29,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogOverlay,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -62,6 +75,13 @@ import { useToast } from "@/hooks/use-toast";
 import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+
+type Location = {
+  value: string;
+  label: string;
+};
+
 export default function OrderPending() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
@@ -71,7 +91,10 @@ export default function OrderPending() {
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoices | null>(
     null
   );
-
+  const [addressNew, setAddresnew] = useState("");
+  const handleChangeAddressNew = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAddresnew(e.target.value);
+  };
   const handleViewInvoice = (customer: IInvoices) => {
     setSelectedInvoice(customer);
   };
@@ -158,11 +181,77 @@ export default function OrderPending() {
     setPhone(event.target.value);
   };
 
-  // Handle changes in the address input
-  const handleAddressChange = (event: any) => {
-    setAddress(event.target.value);
-  };
+  const [provinces, setProvinces] = useState<Location[]>([]);
+  const [districts, setDistricts] = useState<Location[]>([]);
+  const [wards, setWards] = useState<Location[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedWard, setSelectedWard] = useState<string | null>(null);
+  const [openInput, setOpenInput] = useState(false);
+  useEffect(() => {
+    axios
+      .get("https://provinces.open-api.vn/api/p/")
+      .then((response) =>
+        setProvinces(
+          response.data.map((item: any) => ({
+            value: item.code,
+            label: item.name,
+          }))
+        )
+      )
+      .catch((error) => console.error("Error fetching provinces:", error));
+  }, []);
+
+  // Fetch districts based on selected province
+  useEffect(() => {
+    if (selectedProvince) {
+      axios
+        .get(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
+        .then((response) =>
+          setDistricts(
+            response.data.districts.map((item: any) => ({
+              value: item.code,
+              label: item.name,
+            }))
+          )
+        )
+        .catch((error) => console.error("Error fetching districts:", error));
+    } else {
+      setDistricts([]);
+    }
+    setSelectedDistrict("");
+    setSelectedWard("");
+  }, [selectedProvince]);
+
+  // Fetch wards based on selected district
+  useEffect(() => {
+    if (selectedDistrict) {
+      axios
+        .get(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
+        .then((response) =>
+          setWards(
+            response.data.wards.map((item: any) => ({
+              value: item.code,
+              label: item.name,
+            }))
+          )
+        )
+        .catch((error) => console.error("Error fetching wards:", error));
+    } else {
+      setWards([]);
+    }
+    setSelectedWard("");
+  }, [selectedDistrict]);
+  const tinh = provinces.find(
+    (province) => province.value === selectedProvince
+  )?.label;
+  const huyen = districts.find(
+    (district) => district.value === selectedDistrict
+  )?.label;
+  const xa = wards.find((ward) => ward.value === selectedWard)?.label;
+  const newAdress = `${addressNew}, ${xa || ""}, ${huyen || ""}, ${tinh || ""}`;
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+
   const handlePaymentClick = async () => {
     if (!selectedShipper.id) {
       toast({
@@ -172,9 +261,17 @@ export default function OrderPending() {
       });
       return;
     }
+    if ((!tinh || !huyen || !xa) && openInput === true) {
+      toast({
+        title: "Vui lòng điền đủ địa chỉ",
+        description: "Hãy chọn đầy đủ Tỉnh, Huyện, Xã.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const result = {
-      address: address,
+      address: openInput ? newAdress : address,
       phoneReceive: phone,
       salePrice: selectedInvoice?.salePrice,
       discount: selectedInvoice?.discount,
@@ -508,86 +605,320 @@ export default function OrderPending() {
                               Cập nhật đơn hàng
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>
-                                Cập nhật thông tin đơn hàng
-                              </DialogTitle>
-                              <DialogDescription className="text-black">
-                                <div className="flex gap-5 items-center">
-                                  <h1 className="">Số điện thoại: </h1>
-                                  <input
-                                    className="border p-2"
-                                    type="text"
-                                    value={phone}
-                                    onChange={handlePhoneChange} // Update state on change
-                                    name="phone"
-                                    id="phone"
-                                  />
-                                </div>
-                                <div className="mt-5 items-center">
-                                  <h1 className="">Địa chỉ:</h1>
-                                  <input
-                                    className="w-full mt-5 p-2 border"
-                                    type="text"
-                                    value={address || ""}
-                                    onChange={handleAddressChange} // Update state on change
-                                    name="address"
-                                    id="address"
-                                  />
-                                </div>
-                                <div>
-                                  <h1 className="mt-5">
-                                    Chọn nhân viên giao hàng
-                                  </h1>
-                                  <div className="mt-5">
-                                    <Select
-                                      onValueChange={handleShipChange}
-                                      value={selectedShipper.id}
-                                    >
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Nhân viên giao hàng">
-                                          {shippers?.data === null
-                                            ? "Đang tải..."
-                                            : selectedShipper.fullName ||
-                                              "Nhân viên giao hàng"}
-                                        </SelectValue>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectGroup>
-                                          {shippers?.data?.map((item) => (
-                                            <SelectItem
-                                              key={item.id}
-                                              value={item.id}
-                                            >
-                                              {item.fullName}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectGroup>
-                                      </SelectContent>
-                                    </Select>
-                                    <div className="flex justify-end mt-5 ">
-                                      {isLoadingPayment ? (
-                                        <Button
-                                          className="text-2xl font-bold w-full py-10"
-                                          disabled
-                                        >
-                                          <Loader2 className="animate-spin" />
-                                          Đang tải...
-                                        </Button>
-                                      ) : (
-                                        <Button
-                                          onClick={handlePaymentClick}
-                                          className="text-2xl font-bold w-full py-10 bg-blue-500 text-white hover:bg-blue-700"
-                                        >
-                                          Xử lý
-                                        </Button>
-                                      )}
+                          <DialogContent className="max-w-[900px] h-[500px]">
+                            <DialogOverlay className="bg-white rounded-lg p-5">
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Cập nhật thông tin đơn hàng
+                                </DialogTitle>
+                                <DialogDescription className="text-black pt-5 space-y-3">
+                                  <div className="grid grid-cols-5 grid-rows-1 gap-4">
+                                    <div className="col-span-1 font-bold">
+                                      Số điện thoại:
+                                    </div>
+                                    <input
+                                      className="border-b w-full hover:border-b-green-500 focus:outline-none focus:border-b-green-500 "
+                                      type="text"
+                                      value={phone}
+                                      onChange={handlePhoneChange} // Update state on change
+                                      name="phone"
+                                      id="phone"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-5 grid-rows-1 gap-4">
+                                    <div className="col-span-1 font-bold">
+                                      Địa chỉ:
+                                    </div>
+                                    <div className="col-span-3 col-start-2">
+                                      <textarea
+                                        className="border-b w-full hover:border-b-green-500 focus:outline-none focus:border-b-green-500 "
+                                        readOnly
+                                        value={address}
+                                      />
+                                    </div>
+                                    <div className="col-span-1 col-start-5 font-bold flex justify-end">
+                                      <Button
+                                        onClick={() => setOpenInput(!openInput)}
+                                        variant="outline"
+                                        className={`${
+                                          openInput && "bg-blue-500"
+                                        }`}
+                                      >
+                                        Đổi
+                                      </Button>
                                     </div>
                                   </div>
-                                </div>
-                              </DialogDescription>
-                            </DialogHeader>
+                                  {openInput && (
+                                    <>
+                                      <div className="grid grid-cols-2 grid-rows-1 gap-10">
+                                        <div className="grid grid-cols-5 grid-rows-1 gap-4 items-center">
+                                          <div className="col-span-2 font-bold">
+                                            Tỉnh thành:
+                                          </div>
+                                          <div className="col-span-3 col-start-3">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button
+                                                  variant="outline"
+                                                  role="combobox"
+                                                  aria-expanded={
+                                                    !!selectedProvince
+                                                  }
+                                                  className="w-full justify-between"
+                                                >
+                                                  {selectedProvince
+                                                    ? provinces.find(
+                                                        (province) =>
+                                                          province.value ===
+                                                          selectedProvince
+                                                      )?.label
+                                                    : "Chọn tỉnh..."}
+                                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent
+                                                className="w-[300px] xl:w-[300px] max-h-[300px] overflow-y-auto p-0"
+                                                align="start"
+                                              >
+                                                <DropdownMenuLabel className="p-2">
+                                                  Tìm kiếm tỉnh...
+                                                </DropdownMenuLabel>
+                                                {provinces.length > 0 ? (
+                                                  provinces.map((province) => (
+                                                    <DropdownMenuItem
+                                                      key={province.value}
+                                                      onClick={() => {
+                                                        setSelectedProvince(
+                                                          province.value
+                                                        );
+                                                        setSelectedDistrict(
+                                                          null
+                                                        );
+                                                        setSelectedWard(null);
+                                                      }}
+                                                      className="flex px-7 hover:bg-slate-300 items-center justify-between"
+                                                    >
+                                                      {province.label}
+                                                      {selectedProvince ===
+                                                        province.value && (
+                                                        <Check className="ml-2 h-4 w-4" />
+                                                      )}
+                                                    </DropdownMenuItem>
+                                                  ))
+                                                ) : (
+                                                  <DropdownMenuItem disabled>
+                                                    Không tìm thấy!
+                                                  </DropdownMenuItem>
+                                                )}
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-5 grid-rows-1 gap-4 items-center">
+                                          <div className="col-span-2 font-bold">
+                                            Huyện xã:
+                                          </div>
+                                          <div className="col-span-3 col-start-3">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button
+                                                  variant="outline"
+                                                  role="combobox"
+                                                  aria-expanded={
+                                                    !!selectedDistrict
+                                                  }
+                                                  className="w-full justify-between"
+                                                  disabled={!selectedProvince} // Enable only after province is selected
+                                                >
+                                                  {selectedDistrict
+                                                    ? districts.find(
+                                                        (district) =>
+                                                          district.value ===
+                                                          selectedDistrict
+                                                      )?.label
+                                                    : "Chọn huyện..."}
+                                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent
+                                                className="w-[300px] xl:w-[300px] max-h-[300px] overflow-y-auto p-0"
+                                                align="start"
+                                              >
+                                                <DropdownMenuLabel className="p-2">
+                                                  Tìm kiếm huyện...
+                                                </DropdownMenuLabel>
+                                                {districts.length > 0 ? (
+                                                  districts.map((district) => (
+                                                    <DropdownMenuItem
+                                                      key={district.value}
+                                                      onClick={() => {
+                                                        setSelectedDistrict(
+                                                          district.value
+                                                        );
+                                                        setSelectedWard(null);
+                                                      }}
+                                                      className="flex px-7 hover:bg-slate-300 items-center justify-between"
+                                                    >
+                                                      {district.label}
+                                                      {selectedDistrict ===
+                                                        district.value && (
+                                                        <Check className="ml-2 h-4 w-4" />
+                                                      )}
+                                                    </DropdownMenuItem>
+                                                  ))
+                                                ) : (
+                                                  <DropdownMenuItem disabled>
+                                                    Không tìm thấy!
+                                                  </DropdownMenuItem>
+                                                )}
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 grid-rows-1 gap-10">
+                                        <div className="grid grid-cols-5 grid-rows-1 gap-4 items-center">
+                                          <div className="col-span-2 font-bold">
+                                            Xã phường:
+                                          </div>
+                                          <div className="col-span-3 col-start-3">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button
+                                                  variant="outline"
+                                                  role="combobox"
+                                                  aria-expanded={!!selectedWard}
+                                                  className="w-full justify-between"
+                                                  disabled={!selectedDistrict}
+                                                >
+                                                  {selectedWard
+                                                    ? wards.find(
+                                                        (ward) =>
+                                                          ward.value ===
+                                                          selectedWard
+                                                      )?.label
+                                                    : "Chọn xã/phường..."}
+                                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent
+                                                className="w-[300px] xl:w-[300px] max-h-[300px] overflow-y-auto p-0"
+                                                align="start"
+                                              >
+                                                <DropdownMenuLabel className="p-2">
+                                                  Tìm kiếm xã/phường...
+                                                </DropdownMenuLabel>
+                                                {wards.length > 0 ? (
+                                                  wards.map((ward) => (
+                                                    <DropdownMenuItem
+                                                      key={ward.value}
+                                                      onClick={() => {
+                                                        setSelectedWard(
+                                                          ward.value
+                                                        );
+                                                      }}
+                                                      className="flex px-7 hover:bg-slate-300 items-center justify-between"
+                                                    >
+                                                      {ward.label}
+                                                      {selectedWard ===
+                                                        ward.value && (
+                                                        <Check className="ml-2 h-4 w-4" />
+                                                      )}
+                                                    </DropdownMenuItem>
+                                                  ))
+                                                ) : (
+                                                  <DropdownMenuItem disabled>
+                                                    Không tìm thấy!
+                                                  </DropdownMenuItem>
+                                                )}
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-5 grid-rows-1 gap-4 items-center">
+                                          <div className="col-span-2 font-bold">
+                                            Địa chỉ:
+                                          </div>
+                                          <div className="col-span-3 col-start-3">
+                                            <input
+                                              className="border-b w-full hover:border-b-green-500 focus:outline-none focus:border-b-green-500 "
+                                              type="text"
+                                              name="address"
+                                              value={addressNew}
+                                              onChange={handleChangeAddressNew}
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-5 grid-rows-1 gap-4">
+                                        <div className="col-span-1 font-bold">
+                                          Địa chỉ mới:
+                                        </div>
+                                        <div className="col-span-4 col-start-2">
+                                          <textarea
+                                            className="w-full"
+                                            readOnly
+                                            value={newAdress}
+                                          />
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                  <div>
+                                    <h1 className="mt-5">
+                                      Chọn nhân viên giao hàng
+                                    </h1>
+                                    <div className="mt-5">
+                                      <Select
+                                        onValueChange={handleShipChange}
+                                        value={selectedShipper.id}
+                                      >
+                                        <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Nhân viên giao hàng">
+                                            {shippers?.data === null
+                                              ? "Đang tải..."
+                                              : selectedShipper.fullName ||
+                                                "Nhân viên giao hàng"}
+                                          </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectGroup>
+                                            {shippers?.data?.map((item) => (
+                                              <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                              >
+                                                {item.fullName}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectGroup>
+                                        </SelectContent>
+                                      </Select>
+                                      <div className="flex justify-end mt-5 ">
+                                        {isLoadingPayment ? (
+                                          <Button
+                                            className="text-2xl font-bold w-full py-10"
+                                            disabled
+                                          >
+                                            <Loader2 className="animate-spin" />
+                                            Đang tải...
+                                          </Button>
+                                        ) : (
+                                          <Button
+                                            onClick={handlePaymentClick}
+                                            className="text-2xl font-bold w-[200px] mx-auto py-10 bg-blue-500 text-white hover:bg-blue-700"
+                                          >
+                                            Xử lý
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </DialogDescription>
+                              </DialogHeader>
+                            </DialogOverlay>
                           </DialogContent>
                         </Dialog>
                       </div>

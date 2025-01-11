@@ -102,6 +102,12 @@ export default function OrderPage() {
   const [deliveryNote, setDeliveryNote] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
+
+  const handleSelectChange = (value: string) => {
+    const intValue = parseInt(value, 10); // Chuyển đổi từ string sang Int32
+    setSelectedStatus(intValue); // Cập nhật state với giá trị Int32
+  };
   const [perPage, setPerPage] = useState(10); // Default items per page
   useEffect(() => {
     if (!role) return; // Chờ cho đến khi role được xác định
@@ -124,8 +130,9 @@ export default function OrderPage() {
     setSearchParams((prev) => ({
       ...prev,
       "defaultSearch.currentPage": currentPage,
+      ...(selectedStatus ? { InvoiceStatus: selectedStatus } : {}),
     }));
-  }, [currentPage]);
+  }, [currentPage, selectedStatus]);
 
   const handlePageChange = (page: number) => {
     if (page >= 0 && page < totalPages) {
@@ -252,345 +259,431 @@ export default function OrderPage() {
   };
 
   const closeDialog = () => setSelectedCustomer(null);
-
-  if (!shippingData || shippingData.length === 0) {
-    return <p>No orders found.</p>;
+  if (isDataShipper) {
+    // Hiển thị trạng thái tải
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <iframe
+          src="https://lottie.host/embed/b0b83ef8-03a3-4720-9a47-4333a87e71c2/4S8Zw18Nxp.lottie"
+          className="w-48 h-48"
+          title="Loading Animation"
+        ></iframe>
+      </div>
+    );
   }
+
   const invoiceStatus = getInvoiceStatus(
     selectedCustomer?.invoice?.invoiceStatus || 0 // Gán 0 nếu invoiceStatus là undefined
   );
   return (
-    <section className="mt-5">
+    <section className="mt-5 px-14">
       <h1 className="container mx-auto text-3xl font-bold">
         Theo dỗi đơn hàng
       </h1>
-      <div className="container mx-auto border p-5 rounded-lg shadow-lg mt-10">
-        <DataTable columns={columns(handleViewCustomer)} data={shippingData} />
-        <div className="mt-5">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={
-                    () => currentPage > 0 && handlePageChange(currentPage - 1) // Adjust for zero-based index
-                  }
-                  aria-disabled={currentPage === 0}
-                  className={
-                    currentPage === 0
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
+      <div className="grid grid-cols-5 grid-rows-1 gap-4">
+        <div>
+          <div className="border mt-10 p-3 bg-white rounded-lg">
+            <div className="space-y-2">
+              <h1>Trạng thái đơn hàng</h1>
+              <Select onValueChange={handleSelectChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">Đang giao hàng</SelectItem>
+                  <SelectItem value="3">Hoàn thành</SelectItem>
+                  <SelectItem value="4">Đã hủy</SelectItem>
+                  <SelectItem value="6">Không nhận hàng</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <div className="col-span-4">
+          <div className="container mx-auto border p-5 rounded-lg shadow-lg mt-10 bg-white">
+            <DataTable
+              columns={columns(handleViewCustomer)}
+              data={shippingData}
+            />
+            <div className="mt-5">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={
+                        () =>
+                          currentPage > 0 && handlePageChange(currentPage - 1) // Adjust for zero-based index
+                      }
+                      aria-disabled={currentPage === 0}
+                      className={
+                        currentPage === 0
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    >
+                      Trở lại
+                    </PaginationPrevious>
+                  </PaginationItem>
+                  {[...Array(totalPages)].map((_, index) => (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        isActive={currentPage === index} // Adjusted for zero-based index
+                        onClick={() => handlePageChange(index)}
+                        className="cursor-pointer"
+                      >
+                        {index + 1}{" "}
+                        {/* Display the page number starting from 1 */}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        currentPage < totalPages - 1 && // Adjust for zero-based index
+                        handlePageChange(currentPage + 1)
+                      }
+                      aria-disabled={currentPage === totalPages - 1} // Adjust for zero-based index
+                      className={
+                        currentPage === totalPages - 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    >
+                      Tiếp
+                    </PaginationNext>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+
+          {/* Dialog */}
+          {selectedCustomer && (
+            <Dialog open={!!selectedCustomer} onOpenChange={closeDialog}>
+              <DialogContent className="sm:max-w-[1000px]">
+                <DialogHeader>
+                  <DialogTitle>Thông tin chi tiết</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Mã đặt hàng:</strong>{" "}
+                        {selectedCustomer.invoice.id}
+                      </p>
+                      <p>
+                        <strong>Khách hàng:</strong>{" "}
+                        {selectedCustomer.invoice.userVM.fullName}
+                      </p>
+                      <p>
+                        <strong>Tổng tiền:</strong>{" "}
+                        {selectedCustomer.invoice.totalAmount.toLocaleString(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "vnd",
+                          }
+                        )}
+                      </p>
+                      <p>
+                        <strong>Trạng thái:</strong>{" "}
+                        <span className={invoiceStatus.className}>
+                          {invoiceStatus.text}
+                        </span>
+                      </p>
+                      <p>
+                        <strong>Ngày đã giao:</strong>{" "}
+                        {selectedCustomer.shippingDate
+                          ? formatDate(
+                              selectedCustomer.shippingDate,
+                              "dd/MM/yyyy HH:mm"
+                            )
+                          : "Chưa giao hàng"}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p>
+                        <strong>Nhận hàng tại:</strong>{" "}
+                        {selectedCustomer.invoice.storeId} -{" "}
+                        {selectedCustomer.invoice.storeName}
+                      </p>
+                      <p>
+                        <strong>Thời gian:</strong>{" "}
+                        {formatDate(
+                          selectedCustomer.invoice.invoiceDate,
+                          "dd/MM/yyyy HH:mm"
+                        )}
+                      </p>
+                      <p>
+                        <strong>Ngày giao dự kiến:</strong>{" "}
+                        {formatDate(selectedCustomer.estimatedArrival)}
+                      </p>
+                      <p>
+                        <strong>Mua tại:</strong>{" "}
+                        {selectedCustomer.invoice.buyIn}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="border rounded max-h-[250px] overflow-y-auto overflow-hidden">
+                    <table className="min-w-full bg-white">
+                      <thead>
+                        <tr className="bg-blue-100">
+                          <th className="py-2 px-4 border-b text-center">
+                            Hình ảnh
+                          </th>
+                          <th className="py-2 px-4 border-b text-center">
+                            Tên hàng
+                          </th>
+                          <th className="py-2 px-4 border-b text-center">
+                            Số lượng
+                          </th>
+                          <th className="py-2 px-4 border-b text-center">
+                            Giá bán
+                          </th>
+                          <th className="py-2 px-4 border-b text-center">
+                            Thành tiền
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedCustomer.invoice.invoiceDetails.map(
+                          (product, index) => (
+                            <tr key={index} className="h-9 bg-green-100">
+                              <td className="py-2 px-4 border-b text-center">
+                                <img
+                                  src={product.imageUrl}
+                                  className="w-10 h-10 object-cover mx-auto"
+                                  alt=""
+                                />
+                              </td>
+                              <td className="py-2 px-4 border-b text-center">
+                                {product.itemName}
+                              </td>
+                              <td className="py-2 px-4 border-b text-center">
+                                {product.quantity}
+                              </td>
+                              <td className="py-2 px-4 border-b text-center">
+                                {product.salePrice.toLocaleString("vi-VN", {
+                                  style: "currency",
+                                  currency: "vnd",
+                                })}
+                              </td>
+                              <td className="py-2 px-4 border-b text-center">
+                                {product.itemTotalPrice.toLocaleString(
+                                  "vi-VN",
+                                  {
+                                    style: "currency",
+                                    currency: "vnd",
+                                  }
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex gap-10">
+                      <p>
+                        <strong>Tổng tiền hàng:</strong>{" "}
+                        {selectedCustomer.invoice.totalAmount.toLocaleString(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "vnd",
+                          }
+                        )}
+                      </p>
+                      <p>
+                        <strong>Giảm giá:</strong>{" "}
+                        {selectedCustomer.invoice.discount !== null
+                          ? selectedCustomer.invoice.discount.toLocaleString(
+                              "vi-VN",
+                              {
+                                style: "currency",
+                                currency: "vnd",
+                              }
+                            )
+                          : "0 ₫"}
+                      </p>
+                      <p>
+                        <strong>Khác hàng đã trả trước:</strong>{" "}
+                        {selectedCustomer.invoice.customerPaid !== null
+                          ? selectedCustomer.invoice.customerPaid.toLocaleString(
+                              "vi-VN",
+                              {
+                                style: "currency",
+                                currency: "vnd",
+                              }
+                            )
+                          : "0 ₫"}
+                      </p>
+                    </div>
+                    <p>
+                      <strong>Tiền cần thu:</strong>{" "}
+                      {selectedCustomer.invoice.needToPay !== null
+                        ? selectedCustomer.invoice.needToPay.toLocaleString(
+                            "vi-VN",
+                            {
+                              style: "currency",
+                              currency: "vnd",
+                            }
+                          )
+                        : "0"}
+                    </p>
+                  </div>
+                  {selectedCustomer.invoice.invoiceStatus === 2 && (
+                    <div className="mt-4 space-x-10">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="bg-red-500 text-white hover:bg-red-400 hover:text-white"
+                          >
+                            Hủy đơn
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[50vh]">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Cập nhật đơn hàng
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <div className="space-y-2 text-black">
+                                <Label htmlFor="date">Ngày giao hàng</Label>
+                                <Input
+                                  type="date"
+                                  id="date"
+                                  placeholder="Ngày giao hàng"
+                                  value={deliveryDate || ""}
+                                  onChange={(e) =>
+                                    setDeliveryDate(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="space-y-2 mt-5 text-black">
+                                <Label htmlFor="payment-method">Lý do</Label>
+                                <Textarea
+                                  placeholder="Nhập lý do giao hàng thất bại!"
+                                  value={deliveryNote || ""}
+                                  onChange={(e) =>
+                                    setDeliveryNote(e.target.value)
+                                  }
+                                />
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <Button onClick={handleSubmitFail}>Cập nhật</Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="bg-red-500 text-white hover:bg-red-400 hover:text-white"
+                          >
+                            Không thể giao
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[50vh]">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Đơn không thể giao
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <div className="space-y-2 mt-5 text-black">
+                                <Label htmlFor="payment-method">Lý do</Label>
+                                <Textarea
+                                  placeholder="Nhập lý do giao hàng thất bại!"
+                                  value={deliveryNote || ""}
+                                  onChange={(e) =>
+                                    setDeliveryNote(e.target.value)
+                                  }
+                                />
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <Button onClick={handleSubmitFail}>Cập nhật</Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="bg-blue-500 text-white hover:bg-blue-400 hover:text-white"
+                          >
+                            Cập nhật
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[50vh]">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Cập nhật đơn hàng
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <div className="space-y-2 text-black">
+                                <Label htmlFor="date">Ngày giao hàng</Label>
+                                <Input
+                                  type="date"
+                                  id="date"
+                                  placeholder="Ngày giao hàng"
+                                  value={deliveryDate || ""}
+                                  onChange={(e) =>
+                                    setDeliveryDate(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="space-y-2 mt-5 text-black">
+                                <Label htmlFor="payment-method">
+                                  Hình thức giao hàng
+                                </Label>
+                                <Select
+                                  value={paymentMethod?.toString() || ""}
+                                  onValueChange={(value) =>
+                                    setPaymentMethod(Number(value))
+                                  }
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Chọn hình thức giao hàng" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="0">Tiền mặt</SelectItem>
+                                    <SelectItem value="1">
+                                      Chuyển khoản
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <Button onClick={handleSubmit}>Cập nhật</Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  className="mt-4 btn bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={closeDialog}
                 >
-                  Trở lại
-                </PaginationPrevious>
-              </PaginationItem>
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    isActive={currentPage === index} // Adjusted for zero-based index
-                    onClick={() => handlePageChange(index)}
-                    className="cursor-pointer"
-                  >
-                    {index + 1} {/* Display the page number starting from 1 */}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    currentPage < totalPages - 1 && // Adjust for zero-based index
-                    handlePageChange(currentPage + 1)
-                  }
-                  aria-disabled={currentPage === totalPages - 1} // Adjust for zero-based index
-                  className={
-                    currentPage === totalPages - 1
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                >
-                  Tiếp
-                </PaginationNext>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+                  Đóng
+                </button>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
-
-      {/* Dialog */}
-      {selectedCustomer && (
-        <Dialog open={!!selectedCustomer} onOpenChange={closeDialog}>
-          <DialogContent className="sm:max-w-[1000px]">
-            <DialogHeader>
-              <DialogTitle>Thông tin chi tiết</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="space-y-2">
-                  <p>
-                    <strong>Mã đặt hàng:</strong> {selectedCustomer.invoice.id}
-                  </p>
-                  <p>
-                    <strong>Khách hàng:</strong>{" "}
-                    {selectedCustomer.invoice.userVM.fullName}
-                  </p>
-                  <p>
-                    <strong>Tổng tiền:</strong>{" "}
-                    {selectedCustomer.invoice.totalAmount.toLocaleString(
-                      "vi-VN",
-                      {
-                        style: "currency",
-                        currency: "vnd",
-                      }
-                    )}
-                  </p>
-                  <p>
-                    <strong>Trạng thái:</strong>{" "}
-                    <span className={invoiceStatus.className}>
-                      {invoiceStatus.text}
-                    </span>
-                  </p>
-                  <p>
-                    <strong>Ngày đã giao:</strong>{" "}
-                    {selectedCustomer.shippingDate
-                      ? formatDate(
-                          selectedCustomer.shippingDate,
-                          "dd/MM/yyyy HH:mm"
-                        )
-                      : "Chưa giao hàng"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p>
-                    <strong>Nhận hàng tại:</strong>{" "}
-                    {selectedCustomer.invoice.storeId} -{" "}
-                    {selectedCustomer.invoice.storeName}
-                  </p>
-                  <p>
-                    <strong>Thời gian:</strong>{" "}
-                    {formatDate(
-                      selectedCustomer.invoice.invoiceDate,
-                      "dd/MM/yyyy HH:mm"
-                    )}
-                  </p>
-                  <p>
-                    <strong>Ngày giao dự kiến:</strong>{" "}
-                    {formatDate(selectedCustomer.estimatedArrival)}
-                  </p>
-                  <p>
-                    <strong>Mua tại:</strong> {selectedCustomer.invoice.buyIn}
-                  </p>
-                </div>
-              </div>
-              <div className="border rounded max-h-[250px] overflow-y-auto overflow-hidden">
-                <table className="min-w-full bg-white">
-                  <thead>
-                    <tr className="bg-blue-100">
-                      <th className="py-2 px-4 border-b text-center">
-                        Hình ảnh
-                      </th>
-                      <th className="py-2 px-4 border-b text-center">
-                        Tên hàng
-                      </th>
-                      <th className="py-2 px-4 border-b text-center">
-                        Số lượng
-                      </th>
-                      <th className="py-2 px-4 border-b text-center">
-                        Giá bán
-                      </th>
-                      <th className="py-2 px-4 border-b text-center">
-                        Thành tiền
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedCustomer.invoice.invoiceDetails.map(
-                      (product, index) => (
-                        <tr key={index} className="h-9 bg-green-100">
-                          <td className="py-2 px-4 border-b text-center">
-                            <img
-                              src={product.imageUrl}
-                              className="w-10 h-10 object-cover mx-auto"
-                              alt=""
-                            />
-                          </td>
-                          <td className="py-2 px-4 border-b text-center">
-                            {product.itemName}
-                          </td>
-                          <td className="py-2 px-4 border-b text-center">
-                            {product.quantity}
-                          </td>
-                          <td className="py-2 px-4 border-b text-center">
-                            {product.salePrice.toLocaleString("vi-VN", {
-                              style: "currency",
-                              currency: "vnd",
-                            })}
-                          </td>
-                          <td className="py-2 px-4 border-b text-center">
-                            {product.itemTotalPrice.toLocaleString("vi-VN", {
-                              style: "currency",
-                              currency: "vnd",
-                            })}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4">
-                <div className="flex gap-10">
-                  <p>
-                    <strong>Tổng tiền hàng:</strong>{" "}
-                    {selectedCustomer.invoice.totalAmount.toLocaleString(
-                      "vi-VN",
-                      {
-                        style: "currency",
-                        currency: "vnd",
-                      }
-                    )}
-                  </p>
-                  <p>
-                    <strong>Giảm giá:</strong>{" "}
-                    {selectedCustomer.invoice.discount !== null
-                      ? selectedCustomer.invoice.discount.toLocaleString(
-                          "vi-VN",
-                          {
-                            style: "currency",
-                            currency: "vnd",
-                          }
-                        )
-                      : "0 ₫"}
-                  </p>
-                  <p>
-                    <strong>Khác hàng đã trả trước:</strong>{" "}
-                    {selectedCustomer.invoice.customerPaid !== null
-                      ? selectedCustomer.invoice.customerPaid.toLocaleString(
-                          "vi-VN",
-                          {
-                            style: "currency",
-                            currency: "vnd",
-                          }
-                        )
-                      : "0 ₫"}
-                  </p>
-                </div>
-                <p>
-                  <strong>Tiền cần thu:</strong>{" "}
-                  {selectedCustomer.invoice.needToPay !== null
-                    ? selectedCustomer.invoice.needToPay.toLocaleString(
-                        "vi-VN",
-                        {
-                          style: "currency",
-                          currency: "vnd",
-                        }
-                      )
-                    : "0"}
-                </p>
-              </div>
-              {selectedCustomer.invoice.invoiceStatus === 2 && (
-                <div className="mt-4 space-x-10">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="bg-red-500 text-white hover:bg-red-400 hover:text-white"
-                      >
-                        Hủy đơn
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="max-w-[50vh]">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Cập nhật đơn hàng</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          <div className="space-y-2 text-black">
-                            <Label htmlFor="date">Ngày giao hàng</Label>
-                            <Input
-                              type="date"
-                              id="date"
-                              placeholder="Ngày giao hàng"
-                              value={deliveryDate || ""}
-                              onChange={(e) => setDeliveryDate(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2 mt-5 text-black">
-                            <Label htmlFor="payment-method">Lý do</Label>
-                            <Textarea
-                              placeholder="Nhập lý do giao hàng thất bại!"
-                              value={deliveryNote || ""}
-                              onChange={(e) => setDeliveryNote(e.target.value)}
-                            />
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <Button onClick={handleSubmitFail}>Cập nhật</Button>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="bg-blue-500 text-white hover:bg-blue-400 hover:text-white"
-                      >
-                        Cập nhật
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="max-w-[50vh]">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Cập nhật đơn hàng</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          <div className="space-y-2 text-black">
-                            <Label htmlFor="date">Ngày giao hàng</Label>
-                            <Input
-                              type="date"
-                              id="date"
-                              placeholder="Ngày giao hàng"
-                              value={deliveryDate || ""}
-                              onChange={(e) => setDeliveryDate(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2 mt-5 text-black">
-                            <Label htmlFor="payment-method">
-                              Hình thức giao hàng
-                            </Label>
-                            <Select
-                              value={paymentMethod?.toString() || ""}
-                              onValueChange={(value) =>
-                                setPaymentMethod(Number(value))
-                              }
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Chọn hình thức giao hàng" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="0">Tiền mặt</SelectItem>
-                                <SelectItem value="1">Chuyển khoản</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <Button onClick={handleSubmit}>Cập nhật</Button>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              )}
-            </div>
-
-            <button
-              className="mt-4 btn bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={closeDialog}
-            >
-              Đóng
-            </button>
-          </DialogContent>
-        </Dialog>
-      )}
     </section>
   );
 }

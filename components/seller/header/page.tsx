@@ -129,6 +129,10 @@ export default function HeaderSeler() {
                       ...item,
                       variantPrice: item.variantPrice ?? 0,
                       number: 0,
+                      materialPrice:
+                        item.afterDiscountPrice ||
+                        item.variantPrice ||
+                        item.materialPrice,
                     })
                   }
                   className="p-2 rounded-lg hover:bg-blue-100 cursor-pointer"
@@ -151,7 +155,11 @@ export default function HeaderSeler() {
                         </div>
                       </div>
                       <div className="text-blue-600 font-semibold">
-                        {item.materialPrice.toLocaleString("vi-VN", {
+                        {(
+                          item.afterDiscountPrice ||
+                          item.variantPrice ||
+                          item.materialPrice
+                        ).toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}
@@ -215,7 +223,6 @@ export default function HeaderSeler() {
 
       <div className="flex items-center justify-end">
         <div className="ml-5 flex gap-2 items-center">
-          
           <h1 className="text-white">{session?.user.user.phoneNumber}</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -389,7 +389,7 @@ export default function RefundHome() {
           </div>
           <div>
             {isLoadingRefund ? (
-              <Button disabled className="w-full py-10 text-2xl font-bold py-5">
+              <Button disabled className="w-full py-10 text-2xl font-bold">
                 <Loader2 />
                 TRẢ HÀNG
               </Button>

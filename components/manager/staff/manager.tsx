@@ -20,11 +20,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import SaleStaff from "./staff";
 import ShipperStaff from "./shipper";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ManagerListProps = {
   id: number; // The type of `id` can be adjusted based on your requirements
 };
-
 
 export default function ManagerList({ id }: ManagerListProps) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -51,7 +51,7 @@ export default function ManagerList({ id }: ManagerListProps) {
       setCurrentPage(page);
     }
   };
-  
+
   return (
     <>
       {isLoadingStaffs ? (
@@ -89,12 +89,95 @@ export default function ManagerList({ id }: ManagerListProps) {
                   </AccordionTrigger>
                   {id === 3 && (
                     <AccordionContent className="pb-0">
-                      <SaleStaff id={item.id} />
+                      <div className="p-5 border bg-white">
+                        <Tabs defaultValue="info" className="w-full">
+                          <TabsList>
+                            <TabsTrigger value="info">
+                              Thông tin chi tiết
+                            </TabsTrigger>
+                            <TabsTrigger value="inoice">
+                              Thông tin hóa đơn
+                            </TabsTrigger>
+                          </TabsList>
+                          <TabsContent className="py-2 space-y-5" value="info">
+                            {/* <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Mã khách hàng:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.id}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Tên khách hàng:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.fullName}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Số điện thoại:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.phoneNumber || "Chưa có"}
+                                </h1>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Email:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.email}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Mã số thuế:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.taxCode || "Chưa có"}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Trạng thái:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.customerStatus}
+                                </h1>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 grid-rows-1 gap-10">
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Ngày sinh:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.dob}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Tạo bởi:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.createByName}
+                                </h1>
+                              </div>
+                              <div className="grid grid-cols-5 grid-rows-1 gap-4 border-b pb-2">
+                                <h1 className="col-span-2">Nhóm KH:</h1>
+                                <h1 className="col-span-3 col-start-3 font-bold">
+                                  {item.customerType}
+                                </h1>
+                              </div>
+                            </div>
+                            <div className="flex gap-5 border-b pb-2">
+                              <h1>Địa chỉ:</h1>
+                              <h1 className="font-semibold">
+                                {item.address}, {item.ward}, {item.district},{" "}
+                                {item.province}
+                              </h1>
+                            </div> */}
+                          </TabsContent>
+                          <TabsContent value="inoice">
+                            <SaleStaff id={item.id} />
+                          </TabsContent>
+                        </Tabs>
+                      </div>
                     </AccordionContent>
                   )}
                   {id === 6 && (
                     <AccordionContent className="pb-0">
-                      <ShipperStaff id={item.id}/>
+                      <ShipperStaff id={item.id} />
                     </AccordionContent>
                   )}
                 </AccordionItem>
