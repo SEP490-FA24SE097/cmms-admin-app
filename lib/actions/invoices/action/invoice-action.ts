@@ -28,6 +28,22 @@ export async function getInvoices(
   return result.data;
 }
 
+export async function getInvoicesRefund(
+  searchParams: Record<string, string | number | boolean>
+): Promise<ApiListResponse<IInvoices>> {
+  noStore();
+
+  const result = await fetchListDataWithPagi<IInvoices>(
+    "/invoices",
+    searchParams
+  );
+  if (!result.success) {
+    return { data: [], pageCount: 0, error: result.error };
+  }
+
+  return result.data;
+}
+
 export async function getInvoicesPending(
   searchParams: Record<string, string | number | boolean>
 ): Promise<ApiListResponse<IInvoices>> {

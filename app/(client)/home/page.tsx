@@ -10,6 +10,8 @@ import { FaTruck } from "react-icons/fa";
 import { useRole } from "@/providers/role-context";
 import { useRouter } from "nextjs-toploader/app";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"banThuong" | "banNhanh">(
     "banThuong"
@@ -39,29 +41,41 @@ export default function HomePage() {
           {activeTab === "banThuong" ? <SellerHome /> : <OrderSellerPage />}
         </div>
         <div className="row-start-13">
-          <div className="pl-5 flex w-full h-full bg-white shadow-md">
-            <Button
-              variant="ghost"
-              className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 ${
-                activeTab === "banThuong"
-                  ? "text-blue-500 border-t-2 border-blue-500"
-                  : ""
-              }`}
-              onClick={() => setActiveTab("banThuong")}
-            >
-              <AiOutlineThunderbolt size={25} />
-              Bán thường
-            </Button>
-            <Button
-              variant="ghost"
-              className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 ${
-                activeTab === "banNhanh" ? "text-blue-500" : ""
-              }`}
-              onClick={() => setActiveTab("banNhanh")}
-            >
-              <FaTruck size={25} />
-              Bán giao nhanh
-            </Button>
+          <div className="pl-5 w-full h-full bg-white shadow-md  flex justify-between">
+            <div className="flex gap-5">
+              <Button
+                variant="ghost"
+                className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 ${
+                  activeTab === "banThuong"
+                    ? "text-blue-500 border-t-2 border-blue-500"
+                    : ""
+                }`}
+                onClick={() => setActiveTab("banThuong")}
+              >
+                <AiOutlineThunderbolt size={25} />
+                Bán thường
+              </Button>
+              <Button
+                variant="ghost"
+                className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 ${
+                  activeTab === "banNhanh" ? "text-blue-500" : ""
+                }`}
+                onClick={() => setActiveTab("banNhanh")}
+              >
+                <FaTruck size={25} />
+                Bán giao nhanh
+              </Button>
+            </div>
+            <div className="pr-5">
+              <Link href="/refund"></Link>
+              <Button
+                variant="ghost"
+                className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 `}
+              >
+                <AiOutlineThunderbolt size={25} />
+                Hoàn trả
+              </Button>
+            </div>
           </div>
         </div>
       </div>

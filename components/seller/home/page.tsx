@@ -94,6 +94,8 @@ export default function SellerHome() {
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetCustomer(searchCusParams);
 
+  console.log(customers);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -322,7 +324,7 @@ export default function SellerHome() {
                   <div className="col-span-3 col-start-3">
                     <div className="flex gap-10 justify-center items-center">
                       <div className="w-32 border-b text-end">
-                        {item.materialPrice.toLocaleString("vi-VN", {
+                        {item.materialPrice?.toLocaleString("vi-VN", {
                           style: "currency",
                           currency: "vnd",
                         })}

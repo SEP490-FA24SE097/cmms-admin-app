@@ -383,7 +383,7 @@ export default function ImportList() {
                                   {detail.materialCode}
                                 </TableCell>
                                 <TableCell className="w-[200px]">
-                                  {detail.name}
+                                  {detail.sku || detail.name}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   {detail.quantity}

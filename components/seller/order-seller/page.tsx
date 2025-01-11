@@ -354,7 +354,7 @@ export default function OrderSellerPage() {
     const result = {
       totalAmount: totals?.totalPrice,
       salePrice: totals?.totalPrice - discount,
-      customerPaid: 0,
+      customerPaid: customerPaid,
       invoiceType: 1,
       customerId: selectedId,
       storeItems: storeItem,

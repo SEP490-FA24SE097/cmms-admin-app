@@ -163,6 +163,7 @@ export default function UpdateImport() {
         note: detail.note,
       };
       addList(newMaterial);
+      changeQuantity(detail.materialId, detail.quantity);
     });
   };
 
@@ -215,7 +216,7 @@ export default function UpdateImport() {
     note: item.note,
   }));
 
-  const handleOnSumit = async () => {
+  const handleOnSumit = async (status: string) => {
     if (where === "store" && !selectedStore.id) {
       toast({
         title: "Lỗi",
@@ -250,7 +251,7 @@ export default function UpdateImport() {
       totalDiscount: discount,
       storeId: selectedStore.id,
       note: note,
-      status: "",
+      status: status,
       timeStamp: now,
       totalDue: totals.totalPrice - discount,
       importDetails: importDetails,
@@ -693,22 +694,32 @@ export default function UpdateImport() {
               </div>
             </div>
             <div className="flex justify-center">
-              <div>
-                {loading ? (
+              <div className="grid grid-cols-2 grid-rows-1 gap-4">
+                <div>
                   <Button
-                    disabled
-                    className="w-full py-10 2xl:text-2xl text-xl mb-5 font-bold"
+                    onClick={() => handleOnSumit("")}
+                    className="w-full py-10 bg-blue-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-blue-600"
                   >
-                    <Loader2 /> Đang xử lý
+                    <FaSave /> Tạm lưu
                   </Button>
-                ) : (
-                  <Button
-                    onClick={() => handleOnSumit()}
-                    className="w-full py-10 bg-green-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
-                  >
-                    <MdOutlineDownloadDone /> Hoàn thành
-                  </Button>
-                )}
+                </div>
+                <div>
+                  {loading ? (
+                    <Button
+                      disabled
+                      className="w-full py-10 2xl:text-2xl text-xl mb-5 font-bold"
+                    >
+                      <Loader2 /> Đang xử lý
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleOnSumit("Đã nhập hàng")}
+                      className="w-full py-10 bg-green-500 2xl:text-2xl text-xl mb-5 font-bold text-white hover:bg-green-600"
+                    >
+                      <MdOutlineDownloadDone /> Hoàn thành
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

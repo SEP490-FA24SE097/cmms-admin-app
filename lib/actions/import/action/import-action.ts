@@ -45,7 +45,7 @@ export async function CreateImportAction(data: any): Promise<Result<void>> {
   noStore();
 
   const result = await apiRequest(() => axiosAuth.post("/imports", data));
-  console.log(data);
+
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -57,7 +57,7 @@ export async function UpdateImportAction(data: any): Promise<Result<void>> {
   noStore();
 
   const result = await apiRequest(() => axiosAuth.put("/imports", data));
-  console.log(result);
+  console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };
   }

@@ -123,7 +123,7 @@ export default function CustomerDept({ customerId }: any) {
                             </div>
                             <div>
                               <p className="font-semibold">Khách hàng:</p>
-                              <p>{item.invoiceVM.userVM.fullName}</p>
+                              <p>{item.invoiceVM.userVM?.fullName}</p>
                             </div>
                             <div>
                               <p className="font-semibold">Địa chỉ:</p>

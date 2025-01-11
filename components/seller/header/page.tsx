@@ -215,6 +215,7 @@ export default function HeaderSeler() {
 
       <div className="flex items-center justify-end">
         <div className="ml-5 flex gap-2 items-center">
+          
           <h1 className="text-white">{session?.user.user.phoneNumber}</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
