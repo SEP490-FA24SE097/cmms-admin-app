@@ -1,53 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa";
-import { CiFilter } from "react-icons/ci";
-import { Button } from "@/components/ui/button";
+
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { PiDotsThreeOutlineVerticalFill } from "react-icons/pi";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { FaUserCircle } from "react-icons/fa";
+
 import { useToast } from "@/hooks/use-toast";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Invoice, useInvoiceContext } from "@/context/invoice-context";
-import { Material } from "@/lib/actions/material-store/type/material-store";
-import { useGetMaterialStore } from "@/lib/actions/material-store/react-query/material-store-qurey";
+import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
-import { ICustomer } from "@/lib/actions/customer/type/customer";
-import { useGetCustomer } from "@/lib/actions/customer/react-query/customer-query";
+
 import { useReturnInvoiceContext } from "@/context/refund-context";
-import { number } from "zod";
+import { CreateRefund } from "@/lib/actions/invoices/action/invoice-action";
+import { Loader2 } from "lucide-react";
 interface StoreItem {
   materialId: string;
   quantity: number;
@@ -61,51 +28,52 @@ export default function RefundHome() {
   const { data: session } = useSession();
   const { toast } = useToast();
 
-  const [keyword, setKeyword] = useState<string>(""); // Chuỗi nhập vào
-
   const [currentPage, setCurrentPage] = useState(1);
   const storeId = session?.user.user.storeId;
-
-  const [searchParams, setSearchParams] = useState<
-    Record<string, string | number | boolean>
-  >({
-    page: currentPage,
-    itemPerPage: 15,
-    storeId: storeId || "",
-  });
-
-
-
-  // Handle updating current page dynamically
-  useEffect(() => {
-    setSearchParams((prev) => ({
-      ...prev,
-      page: currentPage,
-    }));
-    setSearchCusParams((prev) => ({
-      ...prev,
-      Email: keyword,
-    }));
-  }, [currentPage, keyword]);
-
-  const [searchCusParams, setSearchCusParams] = useState<
-    Record<string, string | number | boolean>
-  >({
-    Email: keyword,
-  });
 
   const {
     returnInvoices,
     activeReturnInvoiceIndex,
     setActiveReturnInvoiceIndex,
     handleAddReturnInvoice,
+    handleDeleteReturnInvoice,
   } = useReturnInvoiceContext();
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
+  // Định dạng giờ
+  const formattedTime = now.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
   const activeInvoice = returnInvoices[activeReturnInvoiceIndex];
   const [storeItem, setStoreItem] = useState<StoreItem[]>([]);
+  const [totalQuantity, setTotalQuantity] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [note, setNote] = useState<string>("");
 
+  const handleNoteChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(event.target.value);
+  };
   useEffect(() => {
-    if (activeInvoice?.invoices?.invoiceDetails) {
+    const quantity = storeItem.reduce((acc, item) => acc + item.quantity, 0);
+    const price = storeItem.reduce(
+      (acc, item) => acc + item.salePrice * item.quantity,
+      0
+    );
+
+    setTotalQuantity(quantity);
+    setTotalPrice(price);
+  }, [storeItem]);
+  useEffect(() => {
+    if (!returnInvoices || returnInvoices.length === 0) {
+      setStoreItem([]);
+    } else if (activeInvoice?.invoices?.invoiceDetails) {
       const items: StoreItem[] = activeInvoice.invoices.invoiceDetails.map(
         (item) => ({
           materialId: item.materialId,
@@ -119,7 +87,7 @@ export default function RefundHome() {
       );
       setStoreItem(items);
     }
-  }, [activeInvoice]);
+  }, [returnInvoices, activeInvoice]);
 
   const handleDeleteQuantity = (
     materialId: string,
@@ -171,14 +139,67 @@ export default function RefundHome() {
       )
     );
   };
+  const refundItem = storeItem?.map((item, index) => ({
+    materialId: item.materialId,
+    quantity: item.number,
+    variantId: item.variantId,
+  }));
+  const [isLoadingRefund, setIdLoadingRefund] = useState(false);
+  const handleRefundClick = async () => {
+    const result = {
+      reason: note,
+      invoiceId: activeInvoice.invoices.id,
+      shippingDate: now,
+      updateType: 1,
+      refundItems: refundItem,
+    };
 
-  useEffect(() => {
-    console.log("Updated storeItem:", storeItem);
-  }, [storeItem]);
+    // If validation passes, proceed with the API call
+    try {
+      setIdLoadingRefund(true);
+      const response = await CreateRefund(result);
+
+      // Check if the response indicates success
+      if (response?.success) {
+        toast({
+          title: "Hoàn trả đã được thực hiện thành công.",
+          description: "Cảm ơn bạn vì đã chọn mua hàng ở chúng tôi!",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        handleDeleteReturnInvoice(activeInvoice.id);
+        setIdLoadingRefund(false);
+        // // Redirect to the home page after a short delay
+        // setTimeout(() => {
+        //   window.location.href = "/home";
+        // }, 2000);
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+        setIdLoadingRefund(false);
+        console.error("Unexpected Payment Response:", response);
+      }
+    } catch (error) {
+      // Handle network or unexpected errors
+      toast({
+        title: "Lỗi",
+        description: "Thanh toán thất bại. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      setIdLoadingRefund(false);
+      console.error("Payment failed with exception:", error);
+    }
+  };
 
   return (
     <div className="grid h-full grid-cols-10 grid-rows-1">
-      <div className="col-span-6 mr-1">
+      <div className="col-span-7 mr-1">
         <div className="grid h-full grid-cols-1 grid-rows-7 gap-4">
           <div className="row-span-6 p-1 space-y-[1px] overflow-hidden overflow-y-auto">
             {storeItem?.map((item, index) => (
@@ -198,7 +219,7 @@ export default function RefundHome() {
                     </button>
                     <img
                       src={item.img || ""}
-                      className="h-10 w-10 object-cover"
+                      className="h-10 w-15 object-cover"
                       alt=""
                     />
                     <h2 className="ml-5 capitalize">{item.name}</h2>
@@ -211,7 +232,6 @@ export default function RefundHome() {
                 <div className="grid grid-cols-5 grid-rows-1 gap-4">
                   <div className="col-span-2">
                     <div className="flex justify-center items-center">
-                      {/* Nút giảm */}
                       <button
                         type="button"
                         onClick={() =>
@@ -238,12 +258,12 @@ export default function RefundHome() {
                           />
                         </svg>
                       </button>
-                      {/* Hiển thị số lượng */}
+
                       <input
                         type="number"
                         value={item.quantity}
                         onChange={(e) => {
-                          const newValue = parseInt(e.target.value, 10) || 0; // Đảm bảo giá trị là số
+                          const newValue = parseInt(e.target.value, 10) || 0;
                           handleUpdateQuantity(
                             item.materialId,
                             item.variantId,
@@ -283,6 +303,7 @@ export default function RefundHome() {
                           />
                         </svg>
                       </button>
+                      <div className="text-slate-500 ml-2"> /{item.number}</div>
                     </div>
                   </div>
 
@@ -312,26 +333,77 @@ export default function RefundHome() {
           <div className="row-start-7">
             <div className="bg-white h-full rounded-lg shadow-lg grid grid-cols-5 grid-rows-1 gap-4">
               <div className="col-span-3 ml-2 my-auto">
-                <Textarea placeholder="Nhập ghi chú vào đây" />
-              </div>
-              <div className="col-span-2 h-full col-start-4">
-                <div className="flex justify-end h-full items-center gap-10 mx-5">
-                  <div>
-                    {/* Tổng tiền hàng: <span>{Item.?.totalQuantity}</span> */}
-                  </div>
-                  <div className="font-bold">
-                    {/* {totals?.totalPrice.toLocaleString("vi-VN", {
-                      style: "currency",
-                      currency: "vnd",
-                    })} */}
-                  </div>
-                </div>
+                <Textarea
+                  value={note}
+                  onChange={handleNoteChange}
+                  placeholder="Nhập ghi chú vào đây"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="col-span-5 h-full bg-white col-start-7 rounded-lg shadow-lg"></div>
+      <div className="col-span-4 h-full bg-white col-start-8 p-5 rounded-lg shadow-lg">
+        <div className="flex h-full flex-col justify-between">
+          <div className="font-semibold">
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-sm text-gray-600"></div>
+              <div className="text-sm text-gray-600">
+                {formattedDate} {formattedTime}
+              </div>
+            </div>
+            <div className="flex items-center mb-4">
+              <FaUserCircle className="text-2xl text-gray-600 mr-2" />
+              <div className="text-blue-600">
+                {activeInvoice?.invoices?.userVM.fullName || ""}
+              </div>
+            </div>
+            <div className="mb-4">
+              <div className="text-green-600 font-bold">Trả hàng</div>
+              <div className="text-blue-600">
+                / {activeInvoice?.invoices.id} -{" "}
+                {activeInvoice?.invoices.staffName} -{" "}
+                {activeInvoice?.invoices.staffId}
+              </div>
+            </div>
+
+            <div className="mb-2 flex justify-between">
+              <div className="text-gray-800">Tổng tiền hàng trả</div>
+              <div className="text-gray-800">
+                {totalPrice.toLocaleString("vi-VN")}
+              </div>
+            </div>
+            <div className="mb-2 flex justify-between">
+              <div className="text-gray-800">Tổng sản phẩm hoàn trả</div>
+              <div className="text-gray-800">{totalQuantity}</div>
+            </div>
+            <div className="mb-4 flex justify-between">
+              <div className="text-gray-800">Cần trả khách</div>
+              <div className="text-blue-600">
+                {totalPrice.toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "vnd",
+                })}
+              </div>
+            </div>
+          </div>
+          <div>
+            {isLoadingRefund ? (
+              <Button disabled className="w-full py-10 text-2xl font-bold py-5">
+                <Loader2 />
+                TRẢ HÀNG
+              </Button>
+            ) : (
+              <Button
+                onClick={handleRefundClick}
+                className="w-full text-2xl py-10 font-bold bg-blue-500  text-white hover:bg-blue-600"
+              >
+                TRẢ HÀNG
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

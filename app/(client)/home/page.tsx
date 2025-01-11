@@ -67,14 +67,15 @@ export default function HomePage() {
               </Button>
             </div>
             <div className="pr-5">
-              <Link href="/refund"></Link>
-              <Button
-                variant="ghost"
-                className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 `}
-              >
-                <AiOutlineThunderbolt size={25} />
-                Hoàn trả
-              </Button>
+              <Link href="/refund">
+                <Button
+                  variant="ghost"
+                  className={`flex py-7 gap-5 text-xl font-bold hover:text-blue-500 `}
+                >
+                  <AiOutlineThunderbolt size={25} />
+                  Hoàn trả
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -71,20 +71,8 @@ export default function HeaderRefund() {
     setActiveReturnInvoiceIndex(index);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-
-    // Filter data and handle undefined case
-    const filtered = (materials?.data || []).filter((item) =>
-      item.materialName.toLowerCase().includes(value.toLowerCase())
-    );
-
-    setFilteredData(filtered);
-    setShowDropdown(value.trim() !== "");
-  };
   return (
-    <nav className="grid grid-cols-3 grid-rows-1 gap-4 p-2 bg-blue-600 justify-between">
+    <nav className="grid grid-cols-2 grid-rows-1 gap-4 p-2 bg-blue-600 justify-between">
       <div
         ref={invoiceListRef}
         className="flex overflow-hidden overflow-x-auto whitespace-nowrap 

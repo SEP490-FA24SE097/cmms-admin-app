@@ -10,6 +10,7 @@ import {
   fetchSingleData,
 } from "@/lib/api/api-handler/generic";
 import { ICusInvoices, IInvoices } from "../type/invoice-type";
+import { axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
 export async function getInvoices(
@@ -61,3 +62,17 @@ export async function getInvoicesPending(
 }
 
 // form mẫu
+export async function CreateRefund(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post("/invoices/update-invoice", data)
+  );
+  console.log(data);
+  console.log(result);
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
+}
