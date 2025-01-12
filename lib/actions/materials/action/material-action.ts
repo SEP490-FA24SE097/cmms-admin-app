@@ -23,6 +23,7 @@ export async function createMaterial(
   data: any
 ): Promise<ApiSingleResponse<IMaterialPost>> {
   noStore();
+  console.log(data);
   const result = await apiRequest(() => axiosAuth.post("/materials", data));
   console.log("result", result);
   if (!result.success) {

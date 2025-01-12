@@ -72,13 +72,32 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
     weightValue: 0,
   });
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const numericValue = Number(value);
+
+    // Kiểm tra nếu trường là số và không cho phép giá trị âm
+    if (
+      [
+        "costPrice",
+        "salePrice",
+        "minStock",
+        "maxStock",
+        "weightValue",
+      ].includes(name)
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numericValue < 0 ? 0 : numericValue,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
+
   const [selectedBrand, setSelectBrand] = useState({ id: "", name: "" });
   const [selectedUnit, setSelectUnit] = useState({ id: "", name: "" });
   const { data: brands, isLoading: isLoadingBrand } = useGetBrand();
@@ -488,6 +507,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
               onChange={handleInputChange}
               className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
               type="number"
+              min="0"
             />
           </div>
           <div className="mb-4 flex gap-5 items-center">
@@ -498,6 +518,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
               onChange={handleInputChange}
               className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
               type="number"
+              min="0"
             />
           </div>
           <div className="mb-4 flex gap-5 items-center">
@@ -508,6 +529,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
               onChange={handleInputChange}
               className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
               type="number"
+              min="0"
             />
           </div>
           <div className="mb-4 flex gap-5 items-center">
@@ -518,6 +540,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
               onChange={handleInputChange}
               className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
               type="number"
+              min="0"
             />
           </div>
           <div className="mb-4 flex gap-5 items-center">
@@ -530,6 +553,7 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
                   onChange={handleInputChange}
                   className="w-full border-b-2 border-gray-300 focus:border-green-500 outline-none"
                   type="number"
+                  min="0"
                 />
               </div>
               <div className="col-start-5 border-b-2 border-gray-300 text-center">
