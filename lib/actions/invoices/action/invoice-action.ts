@@ -38,6 +38,7 @@ export async function getInvoicesRefund(
     "/invoices",
     searchParams
   );
+
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }
@@ -68,8 +69,6 @@ export async function CreateRefund(data: any): Promise<Result<void>> {
   const result = await apiRequest(() =>
     axiosAuth.post("/invoices/update-invoice", data)
   );
-  console.log(data);
-  console.log(result);
   if (!result.success) {
     return { success: false, error: result.error };
   }

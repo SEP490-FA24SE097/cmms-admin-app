@@ -40,7 +40,7 @@ export async function UpdateStockInStore(data: any): Promise<Result<void>> {
       data
     )
   );
-  console.log(data);
+
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -57,7 +57,7 @@ export async function CreateAutoImport(data: any): Promise<Result<void>> {
       data
     )
   );
-  console.log(data);
+
   if (!result.success) {
     return { success: false, error: result.error };
   }

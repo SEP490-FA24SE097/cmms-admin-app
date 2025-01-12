@@ -8,6 +8,7 @@ export type IShippingDetails = {
   estimatedArrival: string; // ISO date format
   shipperName: string;
   shipperCode: string;
+  shippingDetailStatus: number;
   invoice: Invoice;
 };
 

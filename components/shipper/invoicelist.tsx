@@ -53,6 +53,7 @@ import {
 } from "@/lib/actions/delivery/action/delivery";
 import { useRole } from "@/providers/role-context";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 const formatDate = (
   isoDateString: string,
   format: "dd-MM-yyyy" | "dd/MM/yyyy HH:mm" = "dd-MM-yyyy"
@@ -96,7 +97,7 @@ const getInvoiceStatus = (
 
 export default function OrderPage() {
   const { toast } = useToast();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const { role } = useRole(); // Get the role from the RoleContext
   const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
@@ -104,11 +105,13 @@ export default function OrderPage() {
   const [paymentMethod, setPaymentMethod] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
-
+  const queryClient = useQueryClient();
   const handleSelectChange = (value: string) => {
-    const intValue = parseInt(value, 10); // Chuyển đổi từ string sang Int32
-    setSelectedStatus(intValue); // Cập nhật state với giá trị Int32
+    const intValue = Number(value);
+    setSelectedStatus(isNaN(intValue) ? 0 : intValue); // Nếu giá trị không hợp lệ, đặt về 0
   };
+
+  const ShippingId = session?.user.user.id || null;
   const [perPage, setPerPage] = useState(10); // Default items per page
   useEffect(() => {
     if (!role) return; // Chờ cho đến khi role được xác định
@@ -123,6 +126,7 @@ export default function OrderPage() {
     ShipperId: session?.user?.user.id ?? "",
     "defaultSearch.perPage": perPage,
     "defaultSearch.currentPage": currentPage,
+    ShippingDetailStatus: 0,
   });
   const { data: dataShipper, isLoading: isDataShipper } =
     useShippoing(searchParams);
@@ -131,7 +135,9 @@ export default function OrderPage() {
     setSearchParams((prev) => ({
       ...prev,
       "defaultSearch.currentPage": currentPage,
-      ...(selectedStatus ? { InvoiceStatus: selectedStatus } : {}),
+      ...(selectedStatus || selectedStatus === 0
+        ? { ShippingDetailStatus: selectedStatus }
+        : {}),
     }));
   }, [currentPage, selectedStatus]);
 
@@ -179,6 +185,9 @@ export default function OrderPage() {
             backgroundColor: "green",
             color: "white",
           },
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["SHIPPING_LIST", searchParams],
         });
         closeDialog(); // Đóng dialog sau khi cập nhật thành công
       } else {
@@ -230,6 +239,9 @@ export default function OrderPage() {
             color: "white",
           },
         });
+        queryClient.invalidateQueries({
+          queryKey: ["SHIPPING_LIST", searchParams],
+        });
         closeDialog(); // Đóng dialog sau khi cập nhật thành công
       } else {
         toast({
@@ -246,7 +258,7 @@ export default function OrderPage() {
       });
     }
   };
-  const handleSubmitNóthip = async () => {
+  const handleSubmitNotship = async () => {
     if (!selectedCustomer) {
       toast({
         title: "Không có đơn hàng được chọn",
@@ -264,11 +276,13 @@ export default function OrderPage() {
 
     const requestData = {
       reason: deliveryNote,
-      shippingDetailId: selectedCustomer.id,
-      shippingDate: deliveryDate,
-      updateType: 0,
+      invoiceId: selectedCustomer.invoice.id,
+      shippingDetailCode: selectedCustomer.id,
+      shipperId: ShippingId,
     };
-
+    queryClient.invalidateQueries({
+      queryKey: ["SHIPPING_LIST", searchParams],
+    });
     try {
       const result = await UpdateNotSip(requestData);
       if (result.success) {
@@ -299,12 +313,6 @@ export default function OrderPage() {
   const [selectedCustomer, setSelectedCustomer] =
     useState<IShippingDetails | null>(null);
 
-  const [shippingData, setShippingData] = useState<IShippingDetails[]>([]);
-  useEffect(() => {
-    if (dataShipper?.data) {
-      setShippingData(dataShipper.data);
-    }
-  }, [dataShipper]);
   const handleViewCustomer = (customer: IShippingDetails) => {
     setSelectedCustomer(customer);
   };
@@ -341,10 +349,10 @@ export default function OrderPage() {
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2">Đang giao hàng</SelectItem>
-                  <SelectItem value="3">Hoàn thành</SelectItem>
-                  <SelectItem value="4">Đã hủy</SelectItem>
-                  <SelectItem value="6">Không nhận hàng</SelectItem>
+                  <SelectItem value="0">Đang giao hàng</SelectItem>
+                  <SelectItem value="5">Hoàn thành</SelectItem>
+                  <SelectItem value="4">Không nhận hàng</SelectItem>
+                  <SelectItem value="1">Đang gửi yêu cầu</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -354,7 +362,7 @@ export default function OrderPage() {
           <div className="container mx-auto border p-5 rounded-lg shadow-lg mt-10 bg-white">
             <DataTable
               columns={columns(handleViewCustomer)}
-              data={shippingData}
+              data={dataShipper?.data || []}
             />
             <div className="mt-5">
               <Pagination>
@@ -584,7 +592,7 @@ export default function OrderPage() {
                         : "0"}
                     </p>
                   </div>
-                  {selectedCustomer.invoice.invoiceStatus === 2 && (
+                  {selectedCustomer.shippingDetailStatus === 0 && (
                     <div className="mt-4 space-x-10">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -660,7 +668,9 @@ export default function OrderPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <Button onClick={handleSubmitFail}>Cập nhật</Button>
+                            <Button onClick={handleSubmitNotship}>
+                              Cập nhật
+                            </Button>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

@@ -21,7 +21,16 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ITransaction } from "@/lib/actions/customer/type/customer";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 export default function CustomerDept({ customerId }: any) {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedTransaction, setSelectedTransaction] =
@@ -37,7 +46,7 @@ export default function CustomerDept({ customerId }: any) {
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
-      page: currentPage,
+      "defaultSearch.currentPage": currentPage,
       CustomerId: customerId,
     }));
   }, [customerId, currentPage]);
@@ -61,6 +70,12 @@ export default function CustomerDept({ customerId }: any) {
     });
 
     return `${formattedDate} ${formattedTime}`;
+  };
+  const totalPages = transactions?.totalPages || 1;
+  const handlePageChange = (page: number) => {
+    if (page >= 0 && page <= totalPages - 1) {
+      setCurrentPage(page);
+    }
   };
   return (
     <div>
@@ -190,7 +205,7 @@ export default function CustomerDept({ customerId }: any) {
                               <p className="font-semibold">
                                 Phí vận chuyển:{" "}
                                 <span className="text-black">
-                                  {item.invoiceVM.shippingDetailVM?.shippingFee.toLocaleString(
+                                  {item.invoiceVM?.shippingDetailVM?.shippingFee?.toLocaleString(
                                     "vi-VN"
                                   )}
                                 </span>
@@ -225,6 +240,51 @@ export default function CustomerDept({ customerId }: any) {
           </TableBody>
         </Table>
       )}
+      <div className="mt-5 flex items-center">
+        <Pagination className={cn("justify-start w-auto mx-0")}>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() =>
+                  currentPage > 0 && handlePageChange(currentPage - 1)
+                }
+                aria-disabled={currentPage === 0}
+                className={
+                  currentPage === 0
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              ></PaginationPrevious>
+            </PaginationItem>
+            {[...Array(totalPages || 0)].map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  isActive={currentPage === index}
+                  onClick={() => handlePageChange(index)}
+                  className="cursor-pointer"
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  currentPage < totalPages && handlePageChange(currentPage + 1)
+                }
+                aria-disabled={currentPage === totalPages}
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              ></PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+        <div className="ml-5">Có {transactions?.total} kết quả tìm kiếm</div>
+      </div>
     </div>
   );
 }

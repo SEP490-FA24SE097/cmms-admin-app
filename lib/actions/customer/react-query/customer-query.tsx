@@ -5,11 +5,12 @@ import {
   ApiSingleResponse,
 } from "@/lib/api/api-handler/generic";
 import { useQuery } from "@tanstack/react-query";
-import { Data, ICustomer, ITransaction } from "../type/customer";
+import { Customer, Data, ICustomer, ITransaction } from "../type/customer";
 import {
   getAllCustomer,
   getCustomers,
   getCustomerTransaction,
+  getStaffById,
 } from "../action/customer-action";
 
 // list material
@@ -22,6 +23,12 @@ export const useGetCustomer = (
   });
 };
 
+export const useGetStaffById = (searchParams: any) => {
+  return useQuery<ApiSingleResponse<Customer>>({
+    queryKey: ["GET_DETAIL_STAFF", searchParams],
+    queryFn: () => getStaffById(searchParams),
+  });
+};
 export const useGetAllCustomer = (searchParams: any) => {
   return useQuery<ApiSingleResponse<Data>>({
     queryKey: ["ALL_CUSTOMER", searchParams],

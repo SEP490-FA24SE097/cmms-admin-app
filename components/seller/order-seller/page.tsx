@@ -64,6 +64,7 @@ export default function OrderSellerPage() {
     shippingFee: 0,
     totalWeight: 0,
     shippingDistance: 0,
+    message: "",
   });
   const handleShipChange = (value: any) => {
     const selectedShipObject = shippers?.data.find((item) => item.id === value);
@@ -146,6 +147,7 @@ export default function OrderSellerPage() {
         shippingFee: result.data.shippingFee || 0,
         totalWeight: result.data.totalWeight || 0,
         shippingDistance: result.data.shippingDistance || 0,
+        message: result.data.message || "",
       });
       setIsLoadingPrice(false);
     } else {
@@ -175,8 +177,12 @@ export default function OrderSellerPage() {
 
   const [amountDue, setAmountDue] = useState(totals?.totalPrice - discount);
   useEffect(() => {
-    setAmountDue(totals?.totalPrice - discount);
-  }, [discount, totals?.totalPrice]);
+    if (!invoices || invoices.length === 0) {
+      setAmountDue(0);
+    } else {
+      setAmountDue(totals?.totalPrice - discount + selectedPrice.shippingFee);
+    }
+  }, [discount, totals?.totalPrice, selectedPrice.shippingFee, invoices]);
 
   const [name, setName] = useState<string | null>();
   const [email, setEmail] = useState<string | null>();
@@ -327,7 +333,18 @@ export default function OrderSellerPage() {
     variantId: item.variantId, // Replace '1' with the desired logic to calculate quantity
   }));
   const handlePaymentClick = async () => {
-    if (selectedPrice.shippingFee === 0) {
+    const isQuantityExceeded = activeInvoice?.materials.some(
+      (item) => item.number > item.quantity - item.inOrderQuantity
+    );
+    if (isQuantityExceeded) {
+      toast({
+        title: "Lỗi số lượng",
+        description: "Một số mặt hàng có số lượng vượt quá giới hạn cho phép.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedPrice.shippingDistance === 0) {
       toast({
         title: "Vui lòng lấy tiền ship",
         description: "Vui lòng lấy tiền ship ở phần lấy giá ship!",
@@ -351,10 +368,18 @@ export default function OrderSellerPage() {
       });
       return;
     }
+    if (selectedPrice.message !== "") {
+      toast({
+        title: "Vượt quá khoảng cách 200km",
+        description: "Vui lòng chọn địa chỉ khác.",
+        variant: "destructive",
+      });
+      return;
+    }
     const result = {
-      totalAmount: totals?.totalPrice,
-      salePrice: totals?.totalPrice - discount,
-      customerPaid: customerPaid,
+      totalAmount: totals?.totalPrice + selectedPrice.shippingFee,
+      salePrice: totals?.totalPrice,
+      customerPaid: customerPaid > amountDue ? amountDue : customerPaid,
       invoiceType: 1,
       customerId: selectedId,
       storeItems: storeItem,
@@ -380,13 +405,16 @@ export default function OrderSellerPage() {
             color: "white",
           },
         });
-
         handleRemoveInvoice(activeInvoiceIndex);
         setIsLoadingPayment(false);
-        // // Redirect to the home page after a short delay
-        // setTimeout(() => {
-        //   window.location.href = "/home";
-        // }, 2000);
+        setSelectedPrice({
+          shippingFee: 0,
+          totalWeight: 0,
+          shippingDistance: 0,
+          message: "",
+        });
+        setCustomerPaid(0);
+        setAmountDue(0);
       } else {
         // Handle cases where the response indicates failure
         toast({
@@ -408,7 +436,7 @@ export default function OrderSellerPage() {
       console.error("Payment failed with exception:", error);
     }
   };
-
+  console.log(amountDue);
   return (
     <div className="grid w-full h-full grid-cols-5 grid-rows-1 gap-4">
       <div className="col-span-2">
@@ -468,7 +496,11 @@ export default function OrderSellerPage() {
                         onChange={(e) =>
                           handleQuantityChange(item.id, e.target.value)
                         }
-                        className="flex-shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
+                        className={`flex-shrink-0 border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center ${
+                          item.number > item.quantity - item.inOrderQuantity
+                            ? "text-red-500"
+                            : "text-gray-900 dark:text-white"
+                        }`}
                       />
 
                       {/* Nút tăng */}
@@ -536,7 +568,7 @@ export default function OrderSellerPage() {
                     })}
                   </div>
                 </div>
-                <div className="flex justify-between gap-10 mx-5">
+                {/* <div className="flex justify-between gap-10 mx-5">
                   <div>Giảm giá:</div>
                   <div className="font-bold w-24 border-b">
                     <input
@@ -547,7 +579,7 @@ export default function OrderSellerPage() {
                     />{" "}
                     đ
                   </div>
-                </div>
+                </div> */}
                 <div className="flex justify-between gap-10 mx-5">
                   <div>Khách cần trả:</div>
                   <div className="font-bold text-blue-500">
@@ -860,7 +892,10 @@ export default function OrderSellerPage() {
                       <h1>
                         Phí vận chuyển:{" "}
                         <span className="font-bold">
-                          {selectedPrice.shippingFee.toLocaleString("vi-VN")}
+                          {selectedPrice.shippingFee.toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "vnd",
+                          })}
                         </span>
                       </h1>
                       <h1>
@@ -872,6 +907,14 @@ export default function OrderSellerPage() {
                           m
                         </span>
                       </h1>
+                      {selectedPrice.message !== "" && (
+                        <h1>
+                          Thông báo:{" "}
+                          <span className="font-bold text-red-500">
+                            {selectedPrice.message}
+                          </span>
+                        </h1>
+                      )}
                     </div>
                   </div>
                   {isLoadingPrice ? (
@@ -890,7 +933,7 @@ export default function OrderSellerPage() {
                   )}
                 </div>
               </div>
-              <div className="px-5 py-8">
+              <div className="px-5 py-2">
                 <div className="flex justify-between">
                   <h1 className="font-bold">Khách thanh toán</h1>
                   <input

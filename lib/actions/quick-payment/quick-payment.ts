@@ -20,7 +20,7 @@ export async function createQuickPayment(
   const result = await apiRequest(() =>
     axiosAuth.post("/invoices/create-invoice", data)
   );
-  console.log(data);
+
 
   if (!result.success) {
     return { data: null, error: result.error || undefined };

@@ -19,4 +19,5 @@ export type IShipPrice = {
   shippingFee: number;
   totalWeight: number;
   shippingDistance: number;
+  message: string;
 };

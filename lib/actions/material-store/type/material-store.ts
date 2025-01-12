@@ -22,6 +22,7 @@ export type Material = {
   variantPrice: number | null;
   variantCostPrice: number | null;
   discount: number | null;
+  inOrderQuantity: number | null;
   afterDiscountPrice: number | null;
   attributes: IAttributes[];
   lastUpdateTime: string;

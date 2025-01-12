@@ -68,16 +68,17 @@ import {
   CreateAutoImport,
   UpdateStockInStore,
 } from "@/lib/actions/material-store/action/material-store-action";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { UpdateTracking } from "@/lib/actions/notes/action/note-action";
 import { Material } from "@/lib/actions/material-store/type/material-store";
+import { useGetCategory } from "@/lib/actions/materials-fields/react-query/category-query";
+import { useGetBrand } from "@/lib/actions/brand/react-query/brand-query";
 export default function ListMaterialsInStore() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
-  const [fromDate, setFromDate] = useState<Date | null>(null);
-  const [toDate, setToDate] = useState<Date | null>(null);
-  const [openM, setOpenM] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [importQuantity, setImportQuantity] = useState<number | 0>(0);
   const [minStock, setMinStock] = useState(0);
   const [maxStock, setMaxStock] = useState(0);
@@ -86,7 +87,10 @@ export default function ListMaterialsInStore() {
     const validValue = isNaN(value) ? 0 : Math.max(0, Number(value));
     setImportQuantity(validValue);
   };
-
+  const { data: caterogies, isLoading: isLoadingCategories } = useGetCategory();
+  const selectedCategoryData = caterogies?.data.find(
+    (category) => category.id === selectedCategory
+  );
   const handleChangeMinStock = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(0, Number(event.target.value));
     setMinStock(value);
@@ -128,6 +132,10 @@ export default function ListMaterialsInStore() {
 
     return `${formattedDate} ${formattedTime}`;
   };
+  const [searchKey, setSearchKey] = useState("");
+  const handleChangeInout = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchKey(e.target.value);
+  };
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const StoreId = session?.user.user.storeId || "";
@@ -141,11 +149,20 @@ export default function ListMaterialsInStore() {
     setSearchParams((prev) => ({
       ...prev,
       page: currentPage,
-      supplierId: selectedSupplier.id,
+      brandId: selectedSupplier.id,
+      parentCategoryId: selectedCategory,
+      categoryId: selectedSubCategory,
+      materialName: searchKey,
     }));
-  }, [selectedSupplier.id, currentPage]);
+  }, [
+    selectedSupplier.id,
+    currentPage,
+    selectedCategory,
+    selectedSubCategory,
+    searchKey,
+  ]);
 
-  const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
+  const { data: suppliers, isLoading: isLoadingSuplier } = useGetBrand();
   const { data: materialsStore, isLoading: isLoadingMaterialsStore } =
     useGetMaterialStore(searchParams);
   const totalPages = materialsStore?.totalPages || 1;
@@ -272,6 +289,13 @@ export default function ListMaterialsInStore() {
       setLoadingS(false);
     }
   };
+  const clearData = () => {
+    setCurrentPage(1);
+    setSelectedCategory("");
+    setSelectedSubCategory("");
+    setSearchKey("");
+    setSelectSuplier({ id: "", name: "" });
+  };
   const [filteredData, setFilteredData] = useState<Material[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false); // Boolean
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -392,8 +416,8 @@ export default function ListMaterialsInStore() {
                 id="search"
                 className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Tìm mã phiếu"
-                // value={searchTerm}
-                // onChange={handleInputChange}
+                value={searchKey}
+                onChange={handleChangeInout}
                 // onFocus={() => searchTerm && setShowDropdown(true)}
                 // onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               />
@@ -570,65 +594,66 @@ export default function ListMaterialsInStore() {
       <div className="grid grid-cols-5 grid-rows-1 gap-4 mt-5">
         <div className="space-y-5">
           <div className="bg-white shadow-lg p-5 rounded-xl">
-            <h1 className="font-bold">Thời gian</h1>
+            <h1 className="font-bold">Danh mục</h1>
             <div className="flex flex-col gap-1 mt-2">
-              <h1 className="w-full">Từ ngày:</h1>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="w-[200px] pl-3 text-left font-normal"
-                  >
-                    <span>
-                      {fromDate ? formatDate(fromDate) : "Chọn ngày bắt đầu"}
-                    </span>
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={fromDate || undefined}
-                    onSelect={(day) => setFromDate(day || null)} // Xử lý undefined
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("2000-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <h1 className="w-full">Danh mục chính</h1>
+              <Select
+                onValueChange={(value) => {
+                  setSelectedCategory(value);
+                  setSelectedSubCategory(""); // Reset danh mục phụ
+                }}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Chọn Danh mục chính" />
+                </SelectTrigger>
+                <SelectContent>
+                  {caterogies?.data.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex flex-col gap-1 mt-2">
-              <h1 className="w-full">Đến ngày:</h1>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="w-[200px] pl-3 text-left font-normal"
+            {selectedCategory && (
+              <div className="flex flex-col gap-1 mt-2">
+                <h1 className="w-full">Danh mục phụ:</h1>
+                <div>
+                  {/* Chọn SubCategory */}
+                  <Select
+                    onValueChange={(value) => setSelectedSubCategory(value)}
                   >
-                    <span>
-                      {toDate ? formatDate(toDate) : "Chọn ngày kết thúc"}
-                    </span>
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={toDate || undefined}
-                    onSelect={(day) => setToDate(day || null)} // Xử lý undefined
-                    disabled={
-                      (date) => (fromDate ? date < fromDate : false) // Nếu fromDate là null, không cần disable
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue
+                        placeholder={
+                          selectedSubCategory
+                            ? selectedCategoryData?.subCategories.find(
+                                (sub) => sub.id === selectedSubCategory
+                              )?.name
+                            : "Chọn Danh mục phụ"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedCategoryData?.subCategories.map(
+                        (subCategory) => (
+                          <SelectItem
+                            key={subCategory.id}
+                            value={subCategory.id}
+                          >
+                            {subCategory.name}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
           <div className="bg-white shadow-lg p-5 rounded-xl">
-            <h1 className="font-bold">Nhà cung cấp</h1>
+            <h1 className="font-bold">Nhãn hàng</h1>
             <div className="mt-5">
               <Select
                 onValueChange={handleSupllierChange}
@@ -647,6 +672,14 @@ export default function ListMaterialsInStore() {
               </Select>
             </div>
           </div>
+          <div>
+            <Button
+              onClick={clearData}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              Xóa lọc
+            </Button>
+          </div>
         </div>
         <div className="col-span-4 ">
           <div className="border h-auto">
@@ -659,6 +692,12 @@ export default function ListMaterialsInStore() {
               <div className="col-start-7">Đơn vị</div>
               <div className="col-start-8">Thời gian tạo</div>
             </div>
+            {isLoadingMaterialsStore && (
+              <div className=" mt-2 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full " />
+              </div>
+            )}
             {materialsStore?.data.map((item, index) => (
               <Accordion type="single" collapsible key={index}>
                 <AccordionItem value={`item-${index}`}>

@@ -91,6 +91,7 @@ export type IMaterialWarehouse = {
   variantCostPrice: number | null;
   discount: string | null;
   unit: string;
+  isActive: boolean;
   afterDiscountPrice: number | null;
   lastUpdateTime: string;
   attributes: IMaterialAttributeWarehouse[];

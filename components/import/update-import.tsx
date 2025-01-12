@@ -185,6 +185,7 @@ export default function UpdateImport() {
 
   //Fetch supplier
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
+  console.log(suppliers);
   const { data: stores, isLoading: isLoadingStore } = useGetStore();
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -205,6 +206,7 @@ export default function UpdateImport() {
   );
 
   const importDetails = materials.map((item) => ({
+    id: item.id || null,
     materialId: item.materialId,
     variantId: item.variantId,
     quantity: item.quantity,
@@ -567,46 +569,7 @@ export default function UpdateImport() {
                   {formattedDate} - {formattedTime}
                 </h1>
               </div>
-              <div className="flex justify-between items-center gap-5">
-                <h1>Nhập hàng cho: </h1>
-                <Select onValueChange={handleValueChangeWhre} value={where}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Nhập tại" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="kho">Kho tổng</SelectItem>
-                      <SelectItem value="store">Cửa hàng</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              {where === "store" && (
-                <div className="flex justify-between items-center gap-5">
-                  <h1>Cửa hàng: </h1>
-                  <Select
-                    onValueChange={handleStoreChange}
-                    value={selectedStore.id}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Cửa hàng">
-                        {stores?.data === null
-                          ? "Đang tải..."
-                          : selectedStore.name || "Chọn cửa hàng"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {stores?.data?.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+
               <div className="flex justify-between items-center gap-5">
                 <h1>Nhà cung cấp: </h1>
 

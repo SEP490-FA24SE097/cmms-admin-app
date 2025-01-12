@@ -63,15 +63,21 @@ import { RxUpdate } from "react-icons/rx";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CreateDiscount,
+  UpdateStatusMaterials,
   UpdateStock,
 } from "@/lib/actions/materials/action/material-action";
 import { IMaterialWarehouse } from "@/lib/actions/materials/type/material-type";
 import { UpdateTracking } from "@/lib/actions/notes/action/note-action";
+import { useGetCategory } from "@/lib/actions/materials-fields/react-query/category-query";
+import { useGetBrand } from "@/lib/actions/brand/react-query/brand-query";
 export default function ListMaterials() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openM, setOpenM] = useState(false);
@@ -104,12 +110,9 @@ export default function ListMaterials() {
     setSelectSuplier(selectedStoreObject || { id: "", name: "" });
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "";
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  const [searchKey, setSearchKey] = useState("");
+  const handleChangeInout = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchKey(e.target.value);
   };
   const formatDateTime = (timeStamp: any) => {
     if (!timeStamp) return ""; // Kiểm tra giá trị null hoặc undefined
@@ -141,11 +144,26 @@ export default function ListMaterials() {
     setSearchParams((prev) => ({
       ...prev,
       page: currentPage,
-      supplierId: selectedSupplier.id,
+      brandId: selectedSupplier.id,
+      parentCategoryId: selectedCategory,
+      categoryId: selectedSubCategory,
+      materialName: searchKey,
     }));
-  }, [selectedSupplier.id, currentPage]);
-
-  const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
+  }, [
+    selectedSupplier.id,
+    currentPage,
+    selectedCategory,
+    selectedSubCategory,
+    searchKey,
+  ]);
+  const clearData = () => {
+    setCurrentPage(1);
+    setSelectedCategory("");
+    setSelectedSubCategory("");
+    setSearchKey("");
+    setSelectSuplier({ id: "", name: "" });
+  };
+  const { data: suppliers, isLoading: isLoadingSuplier } = useGetBrand();
   const { data: materialsWarehouse, isLoading: isLoadingMaterialsWarehouse } =
     useGetMaterialWarehouse(searchParams);
   const [filteredData, setFilteredData] = useState<IMaterialWarehouse[]>([]);
@@ -300,7 +318,10 @@ export default function ListMaterials() {
       [materialId]: value,
     }));
   };
-
+  const { data: caterogies, isLoading: isLoadingCategories } = useGetCategory();
+  const selectedCategoryData = caterogies?.data.find(
+    (category) => category.id === selectedCategory
+  );
   const resultT = selectedMaterials.map((material) => ({
     materialId: material.materialId,
     variantId: material.variantId,
@@ -368,6 +389,7 @@ export default function ListMaterials() {
       setLoadingT(false);
     }
   };
+
   return (
     <div className="w-[90%] mx-auto mt-5">
       <div className="grid grid-cols-5 grid-rows-1 gap-4">
@@ -397,8 +419,8 @@ export default function ListMaterials() {
                 id="search"
                 className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Tìm mã phiếu"
-                // value={searchTerm}
-                // onChange={handleInputChange}
+                value={searchKey}
+                onChange={handleChangeInout}
                 // onFocus={() => searchTerm && setShowDropdown(true)}
                 // onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               />
@@ -602,65 +624,66 @@ export default function ListMaterials() {
       <div className="grid grid-cols-5 grid-rows-1 gap-4 mt-5">
         <div className="space-y-5">
           <div className="bg-white shadow-lg p-5 rounded-xl">
-            <h1 className="font-bold">Thời gian</h1>
+            <h1 className="font-bold">Danh mục</h1>
             <div className="flex flex-col gap-1 mt-2">
-              <h1 className="w-full">Từ ngày:</h1>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="w-[200px] pl-3 text-left font-normal"
-                  >
-                    <span>
-                      {fromDate ? formatDate(fromDate) : "Chọn ngày bắt đầu"}
-                    </span>
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={fromDate || undefined}
-                    onSelect={(day) => setFromDate(day || null)} // Xử lý undefined
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("2000-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <h1 className="w-full">Danh mục chính</h1>
+              <Select
+                onValueChange={(value) => {
+                  setSelectedCategory(value);
+                  setSelectedSubCategory(""); // Reset danh mục phụ
+                }}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Chọn Danh mục chính" />
+                </SelectTrigger>
+                <SelectContent>
+                  {caterogies?.data.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex flex-col gap-1 mt-2">
-              <h1 className="w-full">Đến ngày:</h1>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="w-[200px] pl-3 text-left font-normal"
+            {selectedCategory && (
+              <div className="flex flex-col gap-1 mt-2">
+                <h1 className="w-full">Danh mục phụ:</h1>
+                <div>
+                  {/* Chọn SubCategory */}
+                  <Select
+                    onValueChange={(value) => setSelectedSubCategory(value)}
                   >
-                    <span>
-                      {toDate ? formatDate(toDate) : "Chọn ngày kết thúc"}
-                    </span>
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={toDate || undefined}
-                    onSelect={(day) => setToDate(day || null)} // Xử lý undefined
-                    disabled={
-                      (date) => (fromDate ? date < fromDate : false) // Nếu fromDate là null, không cần disable
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue
+                        placeholder={
+                          selectedSubCategory
+                            ? selectedCategoryData?.subCategories.find(
+                                (sub) => sub.id === selectedSubCategory
+                              )?.name
+                            : "Chọn Danh mục phụ"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedCategoryData?.subCategories.map(
+                        (subCategory) => (
+                          <SelectItem
+                            key={subCategory.id}
+                            value={subCategory.id}
+                          >
+                            {subCategory.name}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
           <div className="bg-white shadow-lg p-5 rounded-xl">
-            <h1 className="font-bold">Nhà cung cấp</h1>
+            <h1 className="font-bold">Nhãn hàng</h1>
             <div className="mt-5">
               <Select
                 onValueChange={handleSupllierChange}
@@ -679,6 +702,14 @@ export default function ListMaterials() {
               </Select>
             </div>
           </div>
+          <div>
+            <Button
+              onClick={clearData}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              Xóa lọc
+            </Button>
+          </div>
         </div>
         <div className="col-span-4 ">
           <div className="border h-auto">
@@ -691,6 +722,12 @@ export default function ListMaterials() {
               <div className="col-start-7">Đơn vị</div>
               <div className="col-start-8">Thời gian tạo</div>
             </div>
+            {isLoadingMaterialsWarehouse && (
+              <div className=" mt-2 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full " />
+              </div>
+            )}
             {materialsWarehouse?.data.map((item, index) => (
               <Accordion type="single" collapsible key={index}>
                 <AccordionItem value={`item-${index}`}>
@@ -781,6 +818,20 @@ export default function ListMaterials() {
                               </div>
                             </div>
                             <div>
+                              <div className="mb-2 flex gap-2 border-b pb-2">
+                                <span className="font-bold">
+                                  Trạng thái hoạt động:
+                                </span>{" "}
+                                {item.isActive ? (
+                                  <h1 className="text-green-500">
+                                    Đang hoạt động
+                                  </h1>
+                                ) : (
+                                  <h1 className="text-red-500">
+                                    Ngưng hoạt động
+                                  </h1>
+                                )}
+                              </div>
                               <div className="mb-2 border-b pb-2">
                                 <span className="font-bold">Giảm giá:</span>{" "}
                                 {item.discount || "Không có"}
@@ -807,9 +858,11 @@ export default function ListMaterials() {
                                 <span className="font-bold">Số lượng:</span>{" "}
                                 {item.quantity || "0"}
                               </div>
-                              <div className="mb-2 border-b pb-2">
+                              <div className="mb-2 flex gap-2 border-b pb-2">
                                 <span className="font-bold">Nhà cung cấp</span>
-                                <div className=" border-gray-300"></div>
+                                <div className=" border-gray-300">
+                                  {item.supplier}
+                                </div>
                               </div>
                             </div>
                           </div>

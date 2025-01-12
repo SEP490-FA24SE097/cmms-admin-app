@@ -13,6 +13,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -56,6 +63,11 @@ export default function ListRefund() {
   const handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNameCus(e.target.value);
   };
+  const [selectedStatus, setSelectedStatus] = useState<number | null>(3);
+  const handleSelectChange = (value: string) => {
+    const intValue = parseInt(value, 10); // Chuyển đổi từ string sang Int32
+    setSelectedStatus(intValue); // Cập nhật state với giá trị Int32
+  };
   const formatDateTime = (timeStamp: any) => {
     if (!timeStamp) return ""; // Kiểm tra giá trị null hoặc undefined
     const date = new Date(timeStamp);
@@ -78,6 +90,7 @@ export default function ListRefund() {
   const [searchParams, setSearchParams] = useState({
     "defaultSearch.currentPage": currentPage,
     "defaultSearch.perPage": 10,
+    InvoiceStatus: 3,
   });
 
   useEffect(() => {
@@ -87,8 +100,9 @@ export default function ListRefund() {
       CustomerName: nameCus,
       FromDate: selectedDate ? format(selectedDate, "MM/dd/yyyy") : null,
       ToDate: selectedDate2 ? format(selectedDate2, "MM/dd/yyyy") : null,
+      InvoiceStatus: selectedStatus ?? 3,
     }));
-  }, [currentPage, nameCus, selectedDate, selectedDate2]);
+  }, [currentPage, nameCus, selectedDate, selectedDate2, selectedStatus]);
 
   const { data: refunds, isLoading: isLoadingRefund } =
     useGetInvoiceRefund(searchParams);
@@ -150,6 +164,27 @@ export default function ListRefund() {
                           placeholderText="Chọn ngày"
                         />
                       </div>
+                    </div>
+                  </div>
+                  <div className="bg-white shadow-xl rounded-md mt-3 p-2 text-black">
+                    <h1 className="font-bold text-xl">Loại đơn</h1>
+                    <div className="mt-2">
+                      <Select
+                        value={selectedStatus?.toLocaleString()}
+                        onValueChange={handleSelectChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            defaultValue={selectedStatus?.toLocaleString()}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">Đã mua</SelectItem>
+                          <SelectItem value="7">
+                            Giao không thành công
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>

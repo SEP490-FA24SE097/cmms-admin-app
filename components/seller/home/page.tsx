@@ -52,9 +52,9 @@ export default function SellerHome() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState<string>(""); // Chuỗi nhập vào
+  const [cusDept, setCusDept] = useState<number>(0); // Chuỗi nhập vào
   const [selectedName, setSelectedName] = useState<string>(""); // Chuỗi nhập vào
   const [keyword, setKeyword] = useState<string>(""); // Chuỗi nhập vào
-  const [filteredData, setFilteredData] = useState<ICustomer[]>([]); // Mảng chuỗi
   const [showDropdown, setShowDropdown] = useState(false); // Boolean
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,43 +79,52 @@ export default function SellerHome() {
       ...prev,
       page: currentPage,
     }));
-    setSearchCusParams((prev) => ({
-      ...prev,
-      Email: keyword,
-    }));
-  }, [currentPage, keyword]);
+  }, [currentPage]);
 
+  const totalPages = materialData?.totalPages || 1;
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
   const [searchCusParams, setSearchCusParams] = useState<
     Record<string, string | number | boolean>
   >({
     Email: keyword,
   });
 
+  // Hook to fetch customers based on searchCusParams
   const { data: customers, isLoading: isLoadingCustomer } =
     useGetCustomer(searchCusParams);
 
+  // Update searchCusParams when keyword changes
+  useEffect(() => {
+    setSearchCusParams((prev) => ({
+      ...prev,
+      Email: keyword,
+    }));
+  }, [keyword]);
+
+  // Handle input change with debouncing to avoid rapid API calls
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     setKeyword(value);
-    if (keyword === "") {
-      const filtered = (customers?.data || []).filter((item) =>
-        item.email.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredData(filtered); // `filtered` will always be an array
-      setShowDropdown(true);
-    } else {
-      setFilteredData([]); // Clear filteredData when dropdown is hidden
-      setShowDropdown(false);
-    }
+    setShowDropdown(!!value); // Show dropdown if there's input
   };
+
   const handleDeleteCus = () => {
     setSelectedName(""); // Set the input to the selected name
     setSelectedId(null); // Save the selected ID
+    setSearchTerm("");
+    setCusDept(0);
   };
   const handleSelectItem = (item: ICustomer) => {
-    setSearchTerm(item.fullName);
+    setSearchTerm(`${item.fullName} - ${item.email}`);
     setSelectedName(item.fullName); // Set the input to the selected name
+    setKeyword(item.email);
+    setCusDept(item.currentDebt);
     setSelectedId(item.id); // Save the selected ID
     setShowDropdown(false); // Hide the dropdown
   };
@@ -150,12 +159,12 @@ export default function SellerHome() {
   const storeItem = activeInvoice?.materials.map((item, index) => ({
     materialId: item.materialId, // Assuming each item in materials represents a materialId
     quantity: item.number,
-    variantId: item.variantId, // Replace '1' with the desired logic to calculate quantity
+    variantId: item.variantId,
   }));
   const handlePaymentClick = async () => {
     // Kiểm tra nếu có mặt hàng vượt quá số lượng
     const isQuantityExceeded = activeInvoice?.materials.some(
-      (item) => item.number > item.quantity
+      (item) => item.number > item.quantity - item.inOrderQuantity
     );
     if (storeItem.length === 0) {
       toast({
@@ -235,7 +244,7 @@ export default function SellerHome() {
           <div className="row-span-6 p-1 space-y-[1px] overflow-hidden overflow-y-auto">
             {activeInvoice?.materials?.map((item, index) => (
               <div
-                key={item.id}
+                key={index}
                 className="bg-white border border-transparent hover:border-blue-500 flex flex-col justify-between w-full p-2 px-5 h-20 rounded-lg shadow-lg"
               >
                 <div className="flex justify-between">
@@ -288,7 +297,7 @@ export default function SellerHome() {
                           handleQuantityChange(item.id, e.target.value)
                         }
                         className={`flex-shrink-0 border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center ${
-                          item.number > item.quantity
+                          item.number > item.quantity - item.inOrderQuantity
                             ? "text-red-500"
                             : "text-gray-900 dark:text-white"
                         }`}
@@ -386,6 +395,7 @@ export default function SellerHome() {
                     />
                   </svg>
                 </div>
+                {/* Search Input */}
                 <input
                   type="search"
                   id="search"
@@ -396,10 +406,15 @@ export default function SellerHome() {
                   onFocus={() => searchTerm && setShowDropdown(true)}
                   onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 />
+
+                {/* Dropdown */}
                 {showDropdown && (
-                  <ul className="absolute left-0 z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredData.length > 0 ? (
-                      filteredData.map((item) => (
+                  <ul className="absolute left-0 z-50 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {/* Check if customers data is loading */}
+                    {isLoadingCustomer ? (
+                      <li className="p-2 text-gray-500">Đang tải...</li>
+                    ) : (customers?.data || []).length > 0 ? (
+                      (customers?.data || []).map((item) => (
                         <li
                           key={item.id}
                           className="p-2 hover:bg-blue-100 cursor-pointer"
@@ -444,11 +459,22 @@ export default function SellerHome() {
                 </Sheet>
               </div>
             </div>
+            {cusDept > 0 && (
+              <h1>
+                Nợ:{" "}
+                <span className="text-red-500">
+                  {cusDept.toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "vnd",
+                  })}
+                </span>
+              </h1>
+            )}
           </div>
-          <div className="row-span-6">
+          <div className="row-span-6 flex flex-col justify-between">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
               {materialData?.data?.map((product, index) => (
-                <HoverCard key={product.id} openDelay={100} closeDelay={100}>
+                <HoverCard key={index} openDelay={100} closeDelay={100}>
                   <HoverCardTrigger>
                     {" "}
                     <div
@@ -457,6 +483,7 @@ export default function SellerHome() {
                       onClick={() =>
                         handleSelectMaterial({
                           ...product,
+                          inOrderQuantity: product.inOrderQuantity || 0,
                           number: 0,
                           variantPrice: product.variantPrice ?? 0,
                           materialPrice:
@@ -491,44 +518,86 @@ export default function SellerHome() {
                     </div>
                   </HoverCardTrigger>
                   <HoverCardContent className="w-full">
-                    Tồn kho: {product.quantity}
+                    Tồn kho: {product.quantity} - KH đặt:{" "}
+                    {product.inOrderQuantity}
                   </HoverCardContent>
                 </HoverCard>
               ))}
             </div>
+            {!isLoadingMaterialData && (
+              <div className="flex pt-3  justify-between items-center">
+                <h1 className="flex justify-center">
+                  {currentPage}/{materialData?.totalPages} có{" "}
+                  {materialData?.total} sản phẩm
+                </h1>
+                <div className="flex gap-2 items-center">
+                  <div className="flex text-sm">
+                    <h1>Khách hàng: &nbsp;</h1>
+                    <div>
+                      {selectedName ? (
+                        <h1 className="text-blue-500 underline">
+                          {selectedName}
+                        </h1>
+                      ) : (
+                        <h1 className="text-red-500">Chưa chọn</h1>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <Button onClick={handleDeleteCus} variant="ghost">
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div className="row-start-8">
             <div className="flex items-center justify-between">
               <div>
                 <Pagination>
                   <PaginationContent>
+                    {/* Previous Page */}
                     <PaginationItem>
-                      <PaginationPrevious href="#" />
+                      <PaginationPrevious
+                        onClick={() =>
+                          currentPage > 1 && handlePageChange(currentPage - 1)
+                        }
+                        aria-disabled={currentPage === 1}
+                        className={
+                          currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
                     </PaginationItem>
+
+                    {/* Current Page */}
                     <PaginationItem>
-                      <PaginationLink href="#">1</PaginationLink>
+                      <PaginationLink className="cursor-pointer">
+                        {currentPage}
+                      </PaginationLink>
                     </PaginationItem>
+
+                    {/* Next Page */}
                     <PaginationItem>
-                      <PaginationNext href="#" />
+                      <PaginationNext
+                        onClick={() =>
+                          currentPage < totalPages &&
+                          handlePageChange(currentPage + 1)
+                        }
+                        aria-disabled={currentPage === totalPages}
+                        className={
+                          currentPage === totalPages
+                            ? "pointer-events-none opacity-50"
+                            : "cursor-pointer"
+                        }
+                      />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
               </div>
-              <div className="flex text-sm">
-                <h1>Khách hàng: &nbsp;</h1>
-                <div>
-                  {selectedName ? (
-                    <h1 className="text-blue-500 underline">{selectedName}</h1>
-                  ) : (
-                    <h1 className="text-red-500">Chưa chọn</h1>
-                  )}
-                </div>
-              </div>
-              <div>
-                <Button onClick={handleDeleteCus} variant="ghost">
-                  Xóa
-                </Button>
-              </div>
+
               <div>
                 {isLoadingPayment ? (
                   <Button disabled className="px-16 py-7 text-2xl  font-bold">

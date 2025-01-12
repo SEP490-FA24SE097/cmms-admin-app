@@ -9,7 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "nextjs-toploader/app";
+import { useRole } from "@/providers/role-context";
 export default function ManagerHeader() {
+  const router = useRouter();
+  const { role } = useRole();
   const { data: session } = useSession();
   const [dropdownOpen, setDropdownOpen] = React.useState<{
     [key: string]: boolean;
@@ -43,9 +47,9 @@ export default function ManagerHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuItem>Team</DropdownMenuItem>
+                {role === "Senior_Management" && (
+                  <DropdownMenuItem>Điều chỉnh giá</DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => signOut()}>
                   Đăng xuất
                 </DropdownMenuItem>

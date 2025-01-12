@@ -11,6 +11,7 @@ interface Material {
   variantImage: string | null;
   quantity: number;
   number: number;
+  inOrderQuantity: number;
   materialPrice: number;
   variantPrice: number;
   attributes: IAttributes[];

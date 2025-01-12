@@ -34,6 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -69,13 +70,17 @@ import { useGetImport } from "@/lib/actions/import/react-quert/import-query";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useGetInvoicePending } from "@/lib/actions/invoices/react-query/invoice-quert";
-import { IInvoices } from "@/lib/actions/invoices/type/invoice-type";
+import {
+  IInvoiceDetails,
+  IInvoices,
+} from "@/lib/actions/invoices/type/invoice-type";
 import { useGetShipper } from "@/lib/actions/shipper/react-query/shipper-query";
 import { useToast } from "@/hooks/use-toast";
 import { createQuickPayment } from "@/lib/actions/quick-payment/quick-payment";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { getShipPrice } from "@/lib/actions/shipper/action/shipper-action";
 
 type Location = {
   value: string;
@@ -88,6 +93,7 @@ export default function OrderPending() {
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoices | null>(
     null
   );
@@ -98,6 +104,12 @@ export default function OrderPending() {
   const handleViewInvoice = (customer: IInvoices) => {
     setSelectedInvoice(customer);
   };
+  const materials = selectedInvoice?.invoiceDetails.map((item) => ({
+    materialId: item.materialId,
+    variantId: item.variantId,
+    quantity: item.quantity,
+  }));
+
   const [selectedSupplier, setSelectSuplier] = useState({ id: "", name: "" });
   const handleSupllierChange = (value: any) => {
     const selectedStoreObject = suppliers?.data.find(
@@ -112,6 +124,12 @@ export default function OrderPending() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+  const [selectedPrice, setSelectedPrice] = useState({
+    shippingFee: 0,
+    totalWeight: 0,
+    shippingDistance: 0,
+    message: "",
+  });
   const formatDateTime = (timeStamp: any) => {
     if (!timeStamp) return ""; // Kiểm tra giá trị null hoặc undefined
     const date = new Date(timeStamp);
@@ -269,7 +287,22 @@ export default function OrderPending() {
       });
       return;
     }
-
+    if (selectedPrice.shippingDistance === 0 && openInput === true) {
+      toast({
+        title: "Vui lòng lấy tiền ship",
+        description: "Vui lòng lấy tiền ship ở phần lấy giá ship!",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedPrice.message !== "") {
+      toast({
+        title: "Vượt quá khoảng cách 200km",
+        description: "Vui lòng chọn địa chỉ khác.",
+        variant: "destructive",
+      });
+      return;
+    }
     const result = {
       address: openInput ? newAdress : address,
       phoneReceive: phone,
@@ -323,7 +356,42 @@ export default function OrderPending() {
       console.error("Payment failed with exception:", error);
     }
   };
+  const handleGetPrice = async () => {
+    if (!xa) {
+      toast({
+        title: "Không có địa chỉ",
+        description: "Vui lòng chọn nhập địa chỉ!",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    const data = {
+      storeItems: materials,
+      deliveryAddress: newAdress,
+    };
+    setIsLoadingPrice(true);
+    const result = await getShipPrice(data);
+
+    if (result && result.data) {
+      // Update cartData and reset total price based on response
+      setSelectedPrice({
+        shippingFee: result.data.shippingFee || 0,
+        totalWeight: result.data.totalWeight || 0,
+        shippingDistance: result.data.shippingDistance || 0,
+        message: result.data.message || "",
+      });
+      setIsLoadingPrice(false);
+    } else {
+      toast({
+        title: "Có lỗi xảy ra",
+        description: "Vui lòng thử lại sau!",
+        variant: "destructive",
+      });
+      setIsLoadingPrice(false);
+      return;
+    }
+  };
   return (
     <div className="w-[80%] mx-auto mt-5">
       <div className="flex justify-center p-5">
@@ -605,7 +673,11 @@ export default function OrderPending() {
                               Cập nhật đơn hàng
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-[900px] h-[500px]">
+                          <DialogContent
+                            className={`max-w-[900px] ${
+                              openInput ? "h-[600px]" : "h-[400px]"
+                            }`}
+                          >
                             <DialogOverlay className="bg-white rounded-lg p-5">
                               <DialogHeader>
                                 <DialogTitle>
@@ -863,6 +935,58 @@ export default function OrderPending() {
                                             value={newAdress}
                                           />
                                         </div>
+                                      </div>
+                                      <div className="mt-3 flex items-center justify-between">
+                                        <div className="flex gap-5">
+                                          <Label className="text-[16px]">
+                                            Thông tin vận chuyển:
+                                          </Label>
+                                          <div className="text-[14px]">
+                                            <h1>
+                                              Phí vận chuyển:{" "}
+                                              <span className="font-bold">
+                                                {selectedPrice.shippingFee.toLocaleString(
+                                                  "vi-VN",
+                                                  {
+                                                    style: "currency",
+                                                    currency: "vnd",
+                                                  }
+                                                )}
+                                              </span>
+                                            </h1>
+                                            <h1>
+                                              Khoảng cách:{" "}
+                                              <span className="font-bold">
+                                                {selectedPrice.shippingDistance.toLocaleString(
+                                                  "vi-VN"
+                                                )}
+                                                m
+                                              </span>
+                                            </h1>
+                                            {selectedPrice.message !== "" && (
+                                              <h1>
+                                                Thông báo:{" "}
+                                                <span className="font-bold text-red-500">
+                                                  {selectedPrice.message}
+                                                </span>
+                                              </h1>
+                                            )}
+                                          </div>
+                                        </div>
+                                        {isLoadingPrice ? (
+                                          <Button disabled>
+                                            <Loader2 className="animate-spin" />
+                                            Đang lấy...
+                                          </Button>
+                                        ) : (
+                                          <Button
+                                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                                            onClick={handleGetPrice}
+                                          >
+                                            {" "}
+                                            Lấy tiền ship
+                                          </Button>
+                                        )}
                                       </div>
                                     </>
                                   )}

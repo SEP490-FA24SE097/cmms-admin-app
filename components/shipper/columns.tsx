@@ -45,18 +45,81 @@ export const columns = (
     accessorKey: "address",
     header: "Địa chỉ",
   },
-  {
-    accessorKey: "estimatedArrival",
-    header: "Ngày dự định",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("estimatedArrival"));
-      const formated = date.toLocaleDateString();
-      return <div>{formated}</div>;
-    },
-  },
+  // {
+  //   accessorKey: "estimatedArrival",
+  //   header: "Ngày dự định",
+  //   cell: ({ row }) => {
+  //     const date = new Date(row.getValue("estimatedArrival"));
+  //     const formated = date.toLocaleDateString();
+  //     return <div>{formated}</div>;
+  //   },
+  // },
   {
     accessorKey: "invoice.userVM.fullName",
     header: "Họ và tên",
+  },
+  {
+    accessorKey: "shippingDetailStatus",
+    header: "Trạng thái",
+    cell: ({ row }) => {
+      const status = row.original.shippingDetailStatus;
+
+      // Define a mapping for the status codes to user-friendly labels
+      const statusLabels: Record<number, string> = {
+        0: "Đang giao",
+        1: "Gửi yêu cầu chuyển đơn",
+        2: "Đã duyệt",
+        3: "Từ chối",
+        4: "Không nhận hàng",
+        5: "Hoàn Thành",
+      };
+
+      // Validation logic for special cases
+      if (status === 0) {
+        return (
+          <span className="text-orange-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      } else if (status === 4) {
+        return (
+          <span className="text-red-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      } else if (status === 3) {
+        return (
+          <span className="text-red-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      } else if (status === 2) {
+        return (
+          <span className="text-blue-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      } else if (status === 1) {
+        return (
+          <span className="text-blue-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      } else if (status === 5) {
+        return (
+          <span className="text-green-500 font-medium">
+            {statusLabels[status]}
+          </span>
+        );
+      }
+
+      // Fallback to the mapped label or default message
+      return (
+        <span className="text-gray-700 font-medium">
+          {statusLabels[status] || "Trạng thái không xác định"}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "invoice.invoiceStatus",

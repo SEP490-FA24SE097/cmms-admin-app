@@ -129,6 +129,7 @@ export default function HeaderSeler() {
                       ...item,
                       variantPrice: item.variantPrice ?? 0,
                       number: 0,
+                      inOrderQuantity: item.inOrderQuantity || 0,
                       materialPrice:
                         item.afterDiscountPrice ||
                         item.variantPrice ||
@@ -151,7 +152,7 @@ export default function HeaderSeler() {
                         </div>
                         <div className="text-gray-600">{item.materialCode}</div>
                         <div className="text-gray-600">
-                          Tồn: {item.quantity} | KH đặt: 0
+                          Tồn: {item.quantity} | KH đặt: {item.inOrderQuantity}
                         </div>
                       </div>
                       <div className="text-blue-600 font-semibold">

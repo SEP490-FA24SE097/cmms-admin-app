@@ -60,8 +60,13 @@ import { RxUpdate } from "react-icons/rx";
 import { useGetMaterial } from "@/lib/actions/materials/react-query/material-query";
 import UpdateMaterialP from "./popup-update";
 import UpdateVariantP from "./update-variant";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { UpdateStatusMaterials } from "@/lib/actions/materials/action/material-action";
 
 export default function UpdateMaterialC() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [openM, setOpenM] = useState(false);
@@ -122,6 +127,41 @@ export default function UpdateMaterialC() {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+    }
+  };
+  const [isLoadingU, setIsLoadingU] = useState(false);
+  const handleUpdateStatus = async (id: string) => {
+    try {
+      setIsLoadingU(true);
+      const result = await UpdateStatusMaterials(id);
+      if (result.success) {
+        toast({
+          title: "Thành công",
+          description: "Đơn vị mới đã được tạo thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["MATERIAL_WAREHOUSE_LIST"],
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description: result.error || "Có lỗi xảy ra vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi kết nối đến server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingU(false);
     }
   };
   return (
@@ -248,9 +288,9 @@ export default function UpdateMaterialC() {
             <div className="grid grid-cols-5 grid-rows-1 gap-4 bg-blue-100 p-3 font-bold">
               <div>Mã hàng</div>
               <div>Tên sản phẩm</div>
-              <div>Đơn vị</div>
-              <div>Phân loại</div>
-              <div>Giá</div>
+              <div className="text-right">Đơn vị</div>
+              <div className="text-right">Phân loại</div>
+              <div className="text-right">Giá</div>
             </div>
             {materials?.data?.map((item, index) => (
               <Accordion type="single" collapsible key={item.material.id}>
@@ -271,31 +311,27 @@ export default function UpdateMaterialC() {
                     </div>
                     <div>{item.material.name}</div>
 
-                    <div>{item.material.unit}</div>
-                    <div>{item.material.category}</div>
-                    <div>{item.material.salePrice.toLocaleString("vi-VN")}</div>
+                    <div className="text-right">{item.material.unit}</div>
+                    <div className="text-right">{item.material.category}</div>
+                    <div className="text-right">
+                      {item.material.salePrice.toLocaleString("vi-VN")}
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-0">
                     <div className="p-5 border bg-white">
-                      <Tabs
-                        defaultValue={
-                          item.variants.length === 0
-                            ? `${item.material.id}`
-                            : `${item.variants[0].variantId}`
-                        }
-                        className="w-full"
-                      >
+                      <Tabs defaultValue={item.material.id} className="w-full">
                         <TabsList>
-                          {item.variants.length === 0 && (
-                            <TabsTrigger value={`${item.material.id}`}>
-                              {item.material.unit}
-                            </TabsTrigger>
-                          )}
+                          <TabsTrigger value={`${item.material.id}`}>
+                            {item.material.unit}
+                          </TabsTrigger>
+
                           {item.variants
                             .filter(
-                              (variant) => variant.conversionUnitName !== null
+                              (variant, index) =>
+                                index !== 0 &&
+                                variant.conversionUnitName !== null
                             )
-                            .map((variant, index) => (
+                            .map((variant) => (
                               <TabsTrigger
                                 key={variant.variantId}
                                 value={`${variant.variantId}`}
@@ -385,12 +421,7 @@ export default function UpdateMaterialC() {
                                         ).toLocaleString("vi-VN")}
                                       </h1>
                                     </div>
-                                    {/* <div className="flex gap-2 border-b pb-2">
-                                        <h1 className="font-bold">Giảm giá:</h1>{" "}
-                                        <h1>
-                                          {variant.discount || "Không có"}
-                                        </h1>
-                                      </div> */}
+                                    <div></div>
                                   </div>
                                 </div>
                                 <div className="flex justify-end gap-5 ">

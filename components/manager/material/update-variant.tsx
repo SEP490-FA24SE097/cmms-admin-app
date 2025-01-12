@@ -37,9 +37,12 @@ export default function UpdateVariantP({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const numericValue = Number(value);
+
+    // Đảm bảo giá trị không nhỏ hơn 0
     setMaterial((prevCustomer) => ({
       ...prevCustomer,
-      [name]: value,
+      [name]: numericValue < 0 ? 0 : value,
     }));
   };
 

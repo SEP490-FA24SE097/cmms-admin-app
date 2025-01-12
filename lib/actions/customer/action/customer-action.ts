@@ -11,7 +11,7 @@ import {
   fetchSingleData,
   fetchListData,
 } from "@/lib/api/api-handler/generic";
-import { Data, ICustomer, ITransaction } from "../type/customer";
+import { Customer, Data, ICustomer, ITransaction } from "../type/customer";
 import { api, axiosAuth } from "@/lib/api/api-interceptor/api";
 
 // form mẫu fetch list
@@ -32,6 +32,19 @@ export async function getCustomers(
   return result.data;
 }
 
+export async function getStaffById(
+  searchParams: any
+): Promise<ApiSingleResponse<Customer>> {
+  const result = await fetchSingleData<Customer>(
+    `/store/get-staff-id?${new URLSearchParams(searchParams)}`
+  );
+
+  if (!result.success) {
+    return { data: null, error: result.error };
+  }
+
+  return result.data;
+}
 export async function getAllCustomer(
   searchParams: any
 ): Promise<ApiSingleResponse<Data>> {
@@ -49,7 +62,7 @@ export async function getAllCustomer(
 export async function createAccount<T>(data: any): Promise<Result<void>> {
   noStore();
   const result = await apiRequest(() => axiosAuth.post("/customers", data));
-  console.log(result);
+
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -116,12 +129,12 @@ export async function getCustomerTransaction(
   searchParams: Record<string, string | number | boolean>
 ): Promise<ApiListResponse<ITransaction>> {
   noStore();
-
+  console.log(searchParams);
   const result = await fetchListDataWithPagi<ITransaction>(
     "/transactions",
     searchParams
   );
-
+  console.log(result);
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }
