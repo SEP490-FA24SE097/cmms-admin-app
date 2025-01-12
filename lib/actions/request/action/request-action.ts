@@ -87,7 +87,6 @@ export async function SubmitRequest(data: any): Promise<Result<void>> {
       data
     )
   );
-  console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };
   }

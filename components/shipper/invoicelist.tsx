@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  UpdateNotSip,
   updateShipping,
   updateShippingFail,
 } from "@/lib/actions/delivery/action/delivery";
@@ -221,6 +222,56 @@ export default function OrderPage() {
     try {
       const result = await updateShippingFail(requestData);
       if (result) {
+        toast({
+          title: "Thành công",
+          description: "Đơn hàng đã được cập nhật thành công.",
+          style: {
+            backgroundColor: "green",
+            color: "white",
+          },
+        });
+        closeDialog(); // Đóng dialog sau khi cập nhật thành công
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Cập nhật thất bại.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi hệ thống",
+        description: error?.message || "Đã xảy ra lỗi không xác định.",
+        variant: "destructive",
+      });
+    }
+  };
+  const handleSubmitNóthip = async () => {
+    if (!selectedCustomer) {
+      toast({
+        title: "Không có đơn hàng được chọn",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!deliveryNote) {
+      toast({
+        title: "Vui lòng điền đầy đủ lý do thông tin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const requestData = {
+      reason: deliveryNote,
+      shippingDetailId: selectedCustomer.id,
+      shippingDate: deliveryDate,
+      updateType: 0,
+    };
+
+    try {
+      const result = await UpdateNotSip(requestData);
+      if (result.success) {
         toast({
           title: "Thành công",
           description: "Đơn hàng đã được cập nhật thành công.",

@@ -10,7 +10,7 @@ import {
   fetchListDataWithPagi,
   fetchSingleData,
 } from "@/lib/api/api-handler/generic";
-import { api } from "@/lib/api/api-interceptor/api";
+import { api, axiosAuth } from "@/lib/api/api-interceptor/api";
 import { IShippingDetails } from "../type/delivery-type";
 
 // form mẫu fetch list
@@ -65,4 +65,16 @@ export async function updateShippingFail<T>(
     pageCount: result.data.pagination?.perPage ?? 0,
     totalPages: result.data.pagination?.total ?? 0,
   };
+}
+export async function UpdateNotSip(data: any): Promise<Result<void>> {
+  noStore();
+
+  const result = await apiRequest(() =>
+    axiosAuth.post("/shippingDetails/send-request-to-change", data)
+  );
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: undefined };
 }
