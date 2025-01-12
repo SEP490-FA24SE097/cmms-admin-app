@@ -333,10 +333,16 @@ export default function AddMaterials({ setOpenM }: AddMaterialsProps) {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      let errorMessage = "Có lỗi xảy ra khi kết nối đến server.";
+
+      if (error instanceof Error) {
+        errorMessage = error.message; // Use the error's message if available
+      }
+
       toast({
         title: "Lỗi",
-        description: "Có lỗi xảy ra khi kết nối đến server.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
