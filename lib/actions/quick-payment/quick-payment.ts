@@ -21,7 +21,6 @@ export async function createQuickPayment(
     axiosAuth.post("/invoices/create-invoice", data)
   );
 
-
   if (!result.success) {
     return { data: null, error: result.error || undefined };
   }

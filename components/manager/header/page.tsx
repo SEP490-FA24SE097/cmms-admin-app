@@ -48,7 +48,11 @@ export default function ManagerHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {role === "Senior_Management" && (
-                  <DropdownMenuItem>Điều chỉnh giá</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/manage/dataconfig")}
+                  >
+                    Điều chỉnh giá
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => signOut()}>
                   Đăng xuất

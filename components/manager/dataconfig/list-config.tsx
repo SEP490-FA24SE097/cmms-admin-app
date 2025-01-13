@@ -153,7 +153,7 @@ export default function ListConfigAdmin() {
       if (response.success) {
         toast({
           title: "Thành công.",
-          description: "Tạo phiếu nhập thành công!!",
+          description: "Thêm mới cầu hình thành công!!",
           style: {
             backgroundColor: "green",
             color: "white",
@@ -268,7 +268,7 @@ export default function ListConfigAdmin() {
                   onClick={handleSubmit}
                   className="bg-blue-500 text-white hover:bg-blue-600"
                 >
-                  Gửi yêu cầu
+                  Thêm cấu hình
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

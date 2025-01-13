@@ -177,7 +177,7 @@ export default function OrderPage() {
     try {
       const result = await updateShipping(requestData);
 
-      if (result) {
+      if (result.success) {
         toast({
           title: "Thành công",
           description: "Đơn hàng đã được cập nhật thành công.",
@@ -554,18 +554,7 @@ export default function OrderPage() {
                           }
                         )}
                       </p>
-                      <p>
-                        <strong>Giảm giá:</strong>{" "}
-                        {selectedCustomer.invoice.discount !== null
-                          ? selectedCustomer.invoice.discount.toLocaleString(
-                              "vi-VN",
-                              {
-                                style: "currency",
-                                currency: "vnd",
-                              }
-                            )
-                          : "0 ₫"}
-                      </p>
+
                       <p>
                         <strong>Khác hàng đã trả trước:</strong>{" "}
                         {selectedCustomer.invoice.customerPaid !== null

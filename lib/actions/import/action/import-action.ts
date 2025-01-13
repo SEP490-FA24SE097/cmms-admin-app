@@ -45,11 +45,10 @@ export async function CreateImportAction(data: any): Promise<Result<void>> {
   noStore();
 
   const result = await apiRequest(() => axiosAuth.post("/imports", data));
-
   if (!result.success) {
     return { success: false, error: result.error };
   }
-
+  console.log(data);
   return { success: true, data: undefined };
 }
 

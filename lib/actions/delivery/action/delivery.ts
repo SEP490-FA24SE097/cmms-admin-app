@@ -23,7 +23,6 @@ export async function getShipping(
     "/shippingDetails/getShippingDetails",
     searchParams
   );
-  console.log(searchParams);
   if (!result.success) {
     return { data: [], pageCount: 0, error: result.error };
   }
@@ -31,24 +30,20 @@ export async function getShipping(
   return result.data;
 }
 
-export async function updateShipping<T>(
-  data: any
-): Promise<ApiListResponse<T>> {
+export async function updateShipping(data: any): Promise<Result<void>> {
   noStore();
+
   const result = await apiRequest(() =>
-    api.post("/shippingDetails/update-shippingDetail-status", data)
+    axiosAuth.post("/shippingDetails/update-shippingDetail-status", data)
   );
 
   if (!result.success) {
-    return { data: [], error: result.error };
+    return { success: false, error: result.error };
   }
-  // Assuming the result.data contains the expected fields from the API response
-  return {
-    data: result.data.data ? [result.data.data] : [],
-    pageCount: result.data.pagination?.perPage ?? 0,
-    totalPages: result.data.pagination?.total ?? 0,
-  };
+
+  return { success: true, data: undefined };
 }
+
 export async function updateShippingFail<T>(
   data: any
 ): Promise<ApiListResponse<T>> {

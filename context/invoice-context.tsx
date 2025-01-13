@@ -34,9 +34,17 @@ interface InvoiceContextType {
   handleAddInvoice: () => void;
   handleRemoveInvoice: (index: number) => void;
   handleSelectMaterial: (material: Material) => void;
-  handleQuantityChange: (id: string, value: string) => void;
-  updateQuantity: (id: string, increment: boolean) => void;
-  handleRemoveMaterial: (id: string) => void;
+  handleQuantityChange: (
+    materialId: string,
+    variantId: string | null,
+    value: string
+  ) => void;
+  updateQuantity: (
+    materialId: string,
+    variantId: string | null,
+    increment: boolean
+  ) => void;
+  handleRemoveMaterial: (materialId: string, variantId: string | null) => void;
   invoiceListRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -87,11 +95,15 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
       prev.map((invoice, index) => {
         if (index !== activeInvoiceIndex) return invoice;
 
+        // Tìm chỉ số của material dựa trên cả `materialId` và `variantId`
         const existingMaterialIndex = invoice.materials.findIndex(
-          (item) => item.id === material.id
+          (item) =>
+            item.materialId === material.materialId &&
+            item.variantId === material.variantId
         );
 
         if (existingMaterialIndex !== -1) {
+          // Nếu đã tồn tại, tăng số lượng `number`
           const updatedMaterials = [...invoice.materials];
           updatedMaterials[existingMaterialIndex] = {
             ...updatedMaterials[existingMaterialIndex],
@@ -100,6 +112,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
           return { ...invoice, materials: updatedMaterials };
         }
 
+        // Nếu chưa tồn tại, thêm material mới
         return {
           ...invoice,
           materials: [{ ...material, number: 1 }, ...invoice.materials],
@@ -109,7 +122,11 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Change material quantity
-  const handleQuantityChange = (id: string, value: string) => {
+  const handleQuantityChange = (
+    materialId: string,
+    variantId: string | null,
+    value: string
+  ) => {
     const parsedValue = parseInt(value, 10);
 
     if (!isNaN(parsedValue) && parsedValue >= 1) {
@@ -119,7 +136,9 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? {
                 ...invoice,
                 materials: invoice.materials.map((item) =>
-                  item.id === id ? { ...item, number: parsedValue } : item
+                  item.materialId === materialId && item.variantId === variantId
+                    ? { ...item, number: parsedValue }
+                    : item
                 ),
               }
             : invoice
@@ -128,15 +147,18 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Increment or decrement material quantity
-  const updateQuantity = (id: string, increment: boolean) => {
+  const updateQuantity = (
+    materialId: string,
+    variantId: string | null,
+    increment: boolean
+  ) => {
     setInvoices((prev) =>
       prev.map((invoice, index) =>
         index === activeInvoiceIndex
           ? {
               ...invoice,
               materials: invoice.materials.map((item) =>
-                item.id === id
+                item.materialId === materialId && item.variantId === variantId
                   ? {
                       ...item,
                       number: increment
@@ -151,14 +173,22 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  // Remove material from the active invoice
-  const handleRemoveMaterial = (id: string) => {
+  const handleRemoveMaterial = (
+    materialId: string,
+    variantId: string | null
+  ) => {
     setInvoices((prev) =>
       prev.map((invoice, index) =>
         index === activeInvoiceIndex
           ? {
               ...invoice,
-              materials: invoice.materials.filter((item) => item.id !== id),
+              materials: invoice.materials.filter(
+                (item) =>
+                  !(
+                    item.materialId === materialId &&
+                    item.variantId === variantId
+                  )
+              ),
             }
           : invoice
       )

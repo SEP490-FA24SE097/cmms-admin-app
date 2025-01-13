@@ -20,11 +20,27 @@ interface IMaterial {
 interface MaterialContextState {
   materials: IMaterial[];
   addList: (newMaterial: IMaterial) => void;
-  remove: (id: string) => void;
-  updateQuantity: (id: string, increment: boolean) => void;
-  changeQuantity: (id: string, changeBy: number) => void;
-  updateDiscount: (id: string, discount: number) => void;
-  updateNote: (id: string, note: string) => void;
+  remove: (materialId: string, variantId: string | null) => void;
+  updateQuantity: (
+    materialId: string,
+    variantId: string | null,
+    increment: boolean
+  ) => void;
+  changeQuantity: (
+    materialId: string,
+    variantId: string | null,
+    changeBy: number
+  ) => void;
+  updateDiscount: (
+    materialId: string,
+    variantId: string | null,
+    discount: number
+  ) => void;
+  updateNote: (
+    materialId: string,
+    variantId: string | null,
+    note: string
+  ) => void;
 }
 
 const defaultState: MaterialContextState = {
@@ -42,45 +58,50 @@ const MaterialContext = createContext<MaterialContextState>(defaultState);
 export const MaterialProvider = ({ children }: { children: ReactNode }) => {
   const [materials, setMaterials] = useState<IMaterial[]>([]);
 
-  // Add a new material to the list
   const addList = (newMaterial: IMaterial) => {
-    console.log(newMaterial);
-    setMaterials((prevMatrials) => {
-      const existingMaterial = prevMatrials.find(
+    setMaterials((prevMaterials) => {
+      const existingMaterial = prevMaterials.find(
         (material) =>
-          material.id === newMaterial.id &&
+          material.materialId === newMaterial.materialId &&
           material.variantId === newMaterial.variantId
       );
       if (existingMaterial) {
-        return prevMatrials.map((material) =>
-          material.id === newMaterial.id &&
+        return prevMaterials.map((material) =>
+          material.materialId === newMaterial.materialId &&
           material.variantId === newMaterial.variantId
             ? { ...material, quantity: material.quantity + 1 }
             : material
         );
       } else {
-        return [{ ...newMaterial, quantity: 1 }, ...prevMatrials];
+        return [{ ...newMaterial, quantity: 1 }, ...prevMaterials];
       }
     });
   };
 
-  // Remove a material by id
-  const remove = (id: string) => {
+  // Remove a material by materialId and variantId
+  const remove = (materialId: string, variantId: string | null) => {
     setMaterials((prevMaterials) =>
-      prevMaterials.filter((material) => material.id !== id)
+      prevMaterials.filter(
+        (material) =>
+          material.materialId !== materialId || material.variantId !== variantId
+      )
     );
   };
 
-  // Update quantity of a specific material by id
-  const updateQuantity = (id: string, increment: boolean) => {
+  // Update quantity of a specific material by materialId and variantId
+  const updateQuantity = (
+    materialId: string,
+    variantId: string | null,
+    increment: boolean
+  ) => {
     setMaterials((prevMaterials) =>
       prevMaterials.map((material) =>
-        material.id === id
+        material.materialId === materialId && material.variantId === variantId
           ? {
               ...material,
               quantity: increment
                 ? material.quantity + 1
-                : material.quantity - 1,
+                : Math.max(material.quantity - 1, 1), // Ensure quantity does not go below 1
             }
           : material
       )
@@ -88,33 +109,50 @@ export const MaterialProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Change quantity of a material by a specific value (increase or decrease)
-  const changeQuantity = (id: string, changeBy: number) => {
+  const changeQuantity = (
+    materialId: string,
+    variantId: string | null,
+    changeBy: number
+  ) => {
     setMaterials((prevMaterials) =>
       prevMaterials.map((material) =>
-        material.id === id
-          ? { ...material, quantity: Math.max(1, changeBy) } // Ensure quantity is not negative
+        material.materialId === materialId && material.variantId === variantId
+          ? { ...material, quantity: Math.max(1, changeBy) } // Ensure quantity does not go below 1
           : material
       )
     );
   };
-  const updateDiscount = (id: string, discount: number) => {
+
+  // Update discount for a material by materialId and variantId
+  const updateDiscount = (
+    materialId: string,
+    variantId: string | null,
+    discount: number
+  ) => {
     setMaterials((prevMaterials) =>
       prevMaterials.map((material) =>
-        material.id === id
-          ? { ...material, discount: Math.max(0, discount) } // Ensure quantity is not negative
+        material.materialId === materialId && material.variantId === variantId
+          ? { ...material, discount: Math.max(0, discount) } // Ensure discount is not negative
           : material
       )
     );
   };
-  const updateNote = (id: string, note: string) => {
+
+  // Update note for a material by materialId and variantId
+  const updateNote = (
+    materialId: string,
+    variantId: string | null,
+    note: string
+  ) => {
     setMaterials((prevMaterials) =>
       prevMaterials.map((material) =>
-        material.id === id
-          ? { ...material, note } // Cập nhật trường note của material
+        material.materialId === materialId && material.variantId === variantId
+          ? { ...material, note } // Update the note field
           : material
       )
     );
   };
+
   return (
     <MaterialContext.Provider
       value={{

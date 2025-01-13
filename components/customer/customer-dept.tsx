@@ -93,9 +93,6 @@ export default function CustomerDept({ customerId }: any) {
               <TableHead>Thời gian</TableHead>
               <TableHead>Loại</TableHead>
               <TableHead className="text-right">Giá trị</TableHead>
-              <TableHead className="w-[200px] text-right">
-                Dư nợ khách hàng
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -231,9 +228,6 @@ export default function CustomerDept({ customerId }: any) {
                 <TableCell>{item.transactionTypeDisplay}</TableCell>
                 <TableCell className="text-right">
                   {item.amount.toLocaleString("vi-VN")}
-                </TableCell>
-                <TableCell className="text-right">
-                  {(item.customerCurrentDebt ?? 0).toLocaleString("vi-VN")}
                 </TableCell>
               </TableRow>
             ))}

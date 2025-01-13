@@ -10,6 +10,11 @@ import {
   FaUserTie,
   FaClipboardCheck,
 } from "react-icons/fa6";
+import { FaFileImport } from "react-icons/fa";
+import { VscGitPullRequestNewChanges } from "react-icons/vsc";
+import { FaRegNoteSticky } from "react-icons/fa6";
+import { FaUser } from "react-icons/fa";
+import { MdOutlineSupportAgent } from "react-icons/md";
 
 import { RiGridLine } from "react-icons/ri";
 export default function NavHeader() {
@@ -119,19 +124,19 @@ export default function NavHeader() {
                       <div>
                         <Link href="/import">
                           <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                            <FaBoxArchive className="mr-2 size-4" />
+                            <FaFileImport className="mr-2 size-4" />
                             Nhập hàng
                           </div>
                         </Link>
                         <Link href="/admin-request">
                           <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                            <FaBoxArchive className="mr-2 size-4" />
+                            <VscGitPullRequestNewChanges className="mr-2 size-4" />
                             Xử lý yêu cầu
                           </div>
                         </Link>
                         <Link href="/notes">
                           <div className="px-4 py-2 text-white hover:bg-blue-700 flex items-center">
-                            <FaBoxArchive className="mr-2 size-4" />
+                            <FaRegNoteSticky className="mr-2 size-4" />
                             Ghi chú xuất nhập
                           </div>
                         </Link>
@@ -163,7 +168,7 @@ export default function NavHeader() {
                   <button
                     className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
                   >
-                    <FaBoxArchive className="mr-2 size-4" />
+                    <FaUser className="mr-2 size-4" />
                     Khách hàng
                   </button>
                 </Link>
@@ -176,7 +181,7 @@ export default function NavHeader() {
                     <button
                       className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
                     >
-                      <FaBoxArchive className="mr-2 size-4" />
+                      <MdOutlineSupportAgent className="mr-2 size-4" />
                       Nhà cung cấp
                     </button>
                   </Link>
@@ -188,7 +193,7 @@ export default function NavHeader() {
                     <button
                       className={`text-white hover:bg-blue-700 px-8 py-3 text-sm font-medium flex justify-between items-center `}
                     >
-                      <FaBoxArchive className="mr-2 size-4" />
+                      <FaUserTie className="mr-2 size-4" />
                       Nhân viên
                     </button>
                   </Link>

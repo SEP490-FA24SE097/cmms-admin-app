@@ -231,6 +231,14 @@ export default function ListRequestAdmin() {
       setIsLoadingCreate1(false);
     }
   };
+  useEffect(() => {
+    if (where === "kho") {
+      setSelectedStore({
+        id: "",
+        name: "",
+      });
+    }
+  }, [where]);
   const handleSubmit = async () => {
     if (!selectedRequest) {
       setIsLoadingCreate(true);
@@ -240,12 +248,6 @@ export default function ListRequestAdmin() {
         variant: "destructive",
       });
       return;
-    }
-    if (where === "kho") {
-      setSelectedStore({
-        id: "",
-        name: "",
-      });
     }
     const data = {
       fromStoreId: selectedStore.id || null,

@@ -141,7 +141,7 @@ export default function RefundHome() {
   };
   const refundItem = storeItem?.map((item, index) => ({
     materialId: item.materialId,
-    quantity: item.number,
+    quantity: item.quantity,
     variantId: item.variantId,
   }));
   const [isLoadingRefund, setIdLoadingRefund] = useState(false);
@@ -150,6 +150,7 @@ export default function RefundHome() {
       reason: note,
       invoiceId: activeInvoice.invoices.id,
       shippingDate: now,
+      shippingDetailId: activeInvoice.invoices.shippingDetailVM.id,
       updateType: 1,
       refundItems: refundItem,
     };

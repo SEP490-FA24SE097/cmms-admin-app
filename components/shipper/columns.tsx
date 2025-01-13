@@ -72,6 +72,7 @@ export const columns = (
         3: "Từ chối",
         4: "Không nhận hàng",
         5: "Hoàn Thành",
+        6: "Hoàn trả",
       };
 
       // Validation logic for special cases
@@ -99,7 +100,7 @@ export const columns = (
             {statusLabels[status]}
           </span>
         );
-      } else if (status === 1) {
+      } else if (status === 1 || status === 6) {
         return (
           <span className="text-blue-500 font-medium">
             {statusLabels[status]}

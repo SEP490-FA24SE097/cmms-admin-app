@@ -163,7 +163,7 @@ export default function UpdateImport() {
         note: detail.note,
       };
       addList(newMaterial);
-      changeQuantity(detail.materialId, detail.quantity);
+      changeQuantity(detail.materialId, detail.variantId, detail.quantity);
     });
   };
 
@@ -416,7 +416,11 @@ export default function UpdateImport() {
                   >
                     <div className="grid grid-cols-2 grid-rows-1 gap-4 text-center ">
                       <div>
-                        <button onClick={() => remove(item.id)}>
+                        <button
+                          onClick={() =>
+                            remove(item.materialId, item.variantId)
+                          }
+                        >
                           <RiDeleteBin5Line size={20} />
                         </button>
                       </div>
@@ -441,7 +445,11 @@ export default function UpdateImport() {
                             <textarea
                               value={item.note}
                               onChange={(e) =>
-                                updateNote(item.id, e.target.value)
+                                updateNote(
+                                  item.materialId,
+                                  item.variantId,
+                                  e.target.value
+                                )
                               } // Cập nhật note khi thay đổi
                               className="w-full p-2 border rounded"
                             />
@@ -454,7 +462,13 @@ export default function UpdateImport() {
                         {/* Nút giảm */}
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.id, false)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.materialId,
+                              item.variantId,
+                              false
+                            )
+                          }
                           className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
                         >
                           <svg
@@ -481,7 +495,11 @@ export default function UpdateImport() {
                           onChange={(e) => {
                             const newQuantity = parseInt(e.target.value);
                             if (!isNaN(newQuantity)) {
-                              changeQuantity(item.id, newQuantity);
+                              changeQuantity(
+                                item.materialId,
+                                item.variantId,
+                                newQuantity
+                              );
                             }
                           }}
                           className="flex-shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
@@ -490,7 +508,13 @@ export default function UpdateImport() {
                         {/* Nút tăng */}
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.id, true)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.materialId,
+                              item.variantId,
+                              true
+                            )
+                          }
                           className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
                         >
                           <svg
@@ -530,14 +554,19 @@ export default function UpdateImport() {
                               item.quantity
                           ) {
                             updateDiscount(
-                              item.id,
+                              item.materialId,
+                              item.variantId,
                               (item.variantPrice || item.materialPrice) *
                                 item.quantity
                             );
                             return; // Dừng lại nếu discount vượt quá totalPrice
                           }
                           // Cập nhật giá trị discount qua context
-                          updateDiscount(item.id, newDiscount);
+                          updateDiscount(
+                            item.materialId,
+                            item.variantId,
+                            newDiscount
+                          );
                         }}
                         onBlur={(e) => {
                           // Định dạng lại giá trị sau khi rời khỏi input

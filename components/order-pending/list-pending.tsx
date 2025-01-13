@@ -81,7 +81,8 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { getShipPrice } from "@/lib/actions/shipper/action/shipper-action";
-
+import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/skeleton";
 type Location = {
   value: string;
   label: string;
@@ -90,6 +91,8 @@ type Location = {
 export default function OrderPending() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
+  const { data: session } = useSession();
+  const StoreId = session?.user.user.storeId || "";
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -171,8 +174,9 @@ export default function OrderPending() {
     setSearchParams((prev) => ({
       ...prev,
       "defaultSearch.currentPage": currentPage,
+      StoreId: StoreId,
     }));
-  }, [currentPage]);
+  }, [currentPage, StoreId]);
 
   const { data: suppliers, isLoading: isLoadingSuplier } = useGetSuplier();
   const { data: orderPendings, isLoading: isLoadingOrderPending } =
@@ -312,7 +316,8 @@ export default function OrderPending() {
       customerPaid: selectedInvoice?.customerPaid,
       invoiceId: selectedInvoice?.id,
       shipperId: selectedShipper.id,
-      invoiceType: 1,
+      shippingFee: selectedPrice.shippingFee || 0,
+      invoiceType: 2,
     };
 
     // If validation passes, proceed with the API call
@@ -486,6 +491,12 @@ export default function OrderPending() {
               <div className="">Tên người mua</div>
               <div className="">Tổng tiền</div>
             </div>
+            {isLoadingOrderPending && (
+              <div className=" mt-2 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full " />
+              </div>
+            )}
             {orderPendings?.data.map((item, index) => (
               <Accordion type="single" collapsible key={item.id}>
                 <AccordionItem value={`item-${index}`}>
@@ -500,7 +511,7 @@ export default function OrderPending() {
 
                     <div className="">{item.userVM.fullName}</div>
                     <div className="">
-                      {item.totalAmount.toLocaleString("vi-VN", {
+                      {item.salePrice.toLocaleString("vi-VN", {
                         style: "currency",
                         currency: "vnd",
                       })}
