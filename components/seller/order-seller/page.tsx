@@ -436,7 +436,7 @@ export default function OrderSellerPage() {
       console.error("Payment failed with exception:", error);
     }
   };
-  console.log(amountDue);
+  console.log(activeInvoice);
   return (
     <div className="grid w-full h-full grid-cols-5 grid-rows-1 gap-4">
       <div className="col-span-2">
@@ -444,13 +444,17 @@ export default function OrderSellerPage() {
           <div className="row-span-5 h-full p-1 space-y-[1px] overflow-hidden overflow-y-auto scrollbar-thin">
             {activeInvoice?.materials?.map((item, index) => (
               <div
-                key={item.id}
+                key={index}
                 className="bg-white border border-transparent hover:border-blue-500 flex flex-col justify-between w-full p-2 px-5 h-20 rounded-lg shadow-lg"
               >
                 <div className="flex justify-between">
                   <div className="flex gap-5">
                     <h2>{index + 1}</h2>
-                    <button onClick={() => handleRemoveMaterial(item.materialId,item.variantId)}>
+                    <button
+                      onClick={() =>
+                        handleRemoveMaterial(item.materialId, item.variantId)
+                      }
+                    >
                       <RiDeleteBin5Line size={20} />
                     </button>
                     <h2>{item.materialCode}</h2>
@@ -469,7 +473,9 @@ export default function OrderSellerPage() {
                       {/* Nút giảm */}
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.materialId,item.variantId, false)}
+                        onClick={() =>
+                          updateQuantity(item.materialId, item.variantId, false)
+                        }
                         className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
                       >
                         <svg
@@ -494,7 +500,11 @@ export default function OrderSellerPage() {
                         type="text"
                         value={item.number}
                         onChange={(e) =>
-                          handleQuantityChange(item.materialId,item.variantId, e.target.value)
+                          handleQuantityChange(
+                            item.materialId,
+                            item.variantId,
+                            e.target.value
+                          )
                         }
                         className={`flex-shrink-0 border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center ${
                           item.number > item.quantity - item.inOrderQuantity
@@ -506,7 +516,14 @@ export default function OrderSellerPage() {
                       {/* Nút tăng */}
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.materialId,item.variantId, true)}
+                        onClick={() =>
+                          updateQuantity(
+                            item.materialId,
+                            item.variantId,
+
+                            true
+                          )
+                        }
                         className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
                       >
                         <svg

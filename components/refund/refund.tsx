@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { useReturnInvoiceContext } from "@/context/refund-context";
 import { CreateRefund } from "@/lib/actions/invoices/action/invoice-action";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 interface StoreItem {
   materialId: string;
   quantity: number;
@@ -51,6 +52,7 @@ export default function RefundHome() {
     minute: "2-digit",
     hour12: false,
   });
+  const queryClient = useQueryClient();
   const activeInvoice = returnInvoices[activeReturnInvoiceIndex];
   const [storeItem, setStoreItem] = useState<StoreItem[]>([]);
   const [totalQuantity, setTotalQuantity] = useState<number>(0);
@@ -173,10 +175,9 @@ export default function RefundHome() {
 
         handleDeleteReturnInvoice(activeInvoice.id);
         setIdLoadingRefund(false);
-        // // Redirect to the home page after a short delay
-        // setTimeout(() => {
-        //   window.location.href = "/home";
-        // }, 2000);
+        queryClient.invalidateQueries({
+          queryKey: [" INVOICE_REFUND_LIST"],
+        });
       } else {
         toast({
           title: "Lỗi",

@@ -448,9 +448,6 @@ export default function ListRequestStore() {
                           <div className="text-gray-600">
                             {selectedMaterial.materialCode}
                           </div>
-                          <div className="text-gray-600">
-                            Tồn: {selectedMaterial.quantity} | KH đặt: 0
-                          </div>
                         </div>
                         <div className="text-blue-600 font-semibold">
                           {(

@@ -69,7 +69,7 @@ export async function CreateRefund(data: any): Promise<Result<void>> {
   const result = await apiRequest(() =>
     axiosAuth.post("/invoices/update-invoice", data)
   );
-  // console.log(data);
+  console.log(data);
   if (!result.success) {
     return { success: false, error: result.error };
   }

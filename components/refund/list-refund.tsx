@@ -91,6 +91,7 @@ export default function ListRefund() {
     "defaultSearch.currentPage": currentPage,
     "defaultSearch.perPage": 10,
     InvoiceStatus: 3,
+    InvoiceType: 2,
   });
 
   useEffect(() => {
